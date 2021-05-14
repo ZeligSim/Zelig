@@ -1,7 +1,7 @@
 from collections import deque
 from typing import List
 
-from sim import util, network_util
+from sim import util
 
 
 class Item:
