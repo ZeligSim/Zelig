@@ -20,6 +20,7 @@ class Block(Item):
         return f'Block: {self.id}'
 
 
+# TODO: check timestamp logic and links (not) sending items
 class Miner(Node):
     def __init__(self, pos_x: float, pos_y: float, mine_power: int, mine_cost=0,  timestamp=0):
         super().__init__(pos_x, pos_y, timestamp) 
@@ -82,7 +83,7 @@ class Miner(Node):
                 link.send(item)
 
     def __get_difficulty(self) -> float:
-        return 2**230 / 2**256
+        return 2**244 / 2**256
 
 
 
