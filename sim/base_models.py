@@ -10,7 +10,7 @@ class Item:
         self.timestamp = timestamp
         self.size = size
         self.created_at = created_at
-        self.delay = 0 # link will compute this after item creation
+        self.delay = 0.0 # link will compute this after item creation
 
 
 class Node:
@@ -18,7 +18,7 @@ class Node:
         self.id = util.generate_uuid()
         self.timestamp = timestamp
         self.pos = util.Coords(pos_x, pos_y)
-        self.queue = deque()
+        self.queue: deque = deque()
         self.ins = []
         self.outs = []
 
@@ -48,10 +48,10 @@ class Link:
         self.id = util.generate_uuid()
         self.timestamp = start.timestamp
         self.bandwidth = bandwidth
-        self.bit_delay = 0 #TODO: 
+        self.bit_delay = 0#TODO: 
         self.start = start
         self.end = end
-        self.queue = deque()
+        self.queue: deque = deque()
 
     def step(self):
         self.timestamp += 1
