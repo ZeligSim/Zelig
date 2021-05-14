@@ -5,16 +5,17 @@ from sim import util
 
 
 class Item:
-    def __init__(self, timestamp: int, size: int, created_at: int):
+    def __init__(self, timestamp: int, sender_id:str, size: int, created_at: int):
         self.id = util.generate_uuid()
         self.timestamp = timestamp
         self.size = size
         self.created_at = created_at
+        self.sender_id = sender_id
         self.delay = 0.0 # link will compute this after item creation
 
 
 class Node:
-    def __init__(self, pos_x: int, pos_y: int, timestamp=0):
+    def __init__(self, pos_x: float, pos_y: float, timestamp=0):
         self.id = util.generate_uuid()
         self.timestamp = timestamp
         self.pos = util.Coords(pos_x, pos_y)
