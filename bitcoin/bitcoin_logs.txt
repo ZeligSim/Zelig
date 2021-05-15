@@ -1,0 +1,32 @@
+2021-05-15 21:00:38.008 | INFO     | bitcoin_models:__init__:35 - Created miner MINER_A
+2021-05-15 21:00:38.012 | INFO     | bitcoin_models:__init__:35 - Created miner MINER_B
+2021-05-15 21:00:38.012 | INFO     | bitcoin_models:__init__:35 - Created miner MINER_C
+2021-05-15 21:00:38.013 | INFO     | bitcoin_models:__init__:35 - Created miner MINER_D
+
+2021-05-15 21:00:38.014 | INFO     | bitcoin_models:generate_block:75 - [5] MINER_A GENERATED BLOCK 55fac143-3611-43df-810d-b8de7528330b
+
+2021-05-15 21:00:38.015 | INFO     | bitcoin_models:__consume:60 - [6] MINER_B RECEIVED INV MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
+2021-05-15 21:00:38.016 | INFO     | bitcoin_models:__consume:62 - [6] MINER_B RESPONDED WITH GETDATA
+
+2021-05-15 21:00:38.017 | INFO     | bitcoin_models:__consume:66 - [8] MINER_A RECEIVED GETDATA MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
+
+2021-05-15 21:00:38.017 | INFO     | bitcoin_models:__consume:54 - [13] MINER_B RECEIVED BLOCK 55fac143-3611-43df-810d-b8de7528330b
+
+2021-05-15 21:00:38.018 | INFO     | bitcoin_models:__consume:60 - [14] MINER_C RECEIVED INV MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
+2021-05-15 21:00:38.018 | INFO     | bitcoin_models:__consume:62 - [14] MINER_C RESPONDED WITH GETDATA
+
+2021-05-15 21:00:38.019 | INFO     | bitcoin_models:__consume:60 - [15] MINER_A RECEIVED INV MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
+
+2021-05-15 21:00:38.020 | INFO     | bitcoin_models:__consume:66 - [16] MINER_B RECEIVED GETDATA MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
+
+2021-05-15 21:00:38.020 | INFO     | bitcoin_models:__consume:54 - [21] MINER_C RECEIVED BLOCK 55fac143-3611-43df-810d-b8de7528330b
+
+2021-05-15 21:00:38.021 | INFO     | bitcoin_models:__consume:60 - [22] MINER_D RECEIVED INV MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
+2021-05-15 21:00:38.021 | INFO     | bitcoin_models:__consume:62 - [22] MINER_D RESPONDED WITH GETDATA
+
+2021-05-15 21:00:38.031 | INFO     | bitcoin_models:__consume:60 - [23] MINER_B RECEIVED INV MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
+
+2021-05-15 21:00:38.032 | INFO     | bitcoin_models:__consume:66 - [24] MINER_C RECEIVED GETDATA MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
+2021-05-15 21:00:38.032 | INFO     | bitcoin_models:__consume:54 - [29] MINER_D RECEIVED BLOCK 55fac143-3611-43df-810d-b8de7528330b
+
+2021-05-15 21:00:38.033 | INFO     | bitcoin_models:__consume:60 - [31] MINER_C RECEIVED INV MESSAGE FOR BLOCK 55fac143-3611-43df-810d-b8de7528330b
