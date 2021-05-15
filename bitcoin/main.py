@@ -1,6 +1,5 @@
 from bitcoin_models import Block, Miner
 
-
 miner_a = Miner(0, 0, 1000)
 miner_b = Miner(100, 100, 1000)
 
@@ -17,8 +16,6 @@ while True:
     time += 1
     for node in nodes:
         node.step()
-    x = input()
+    # x = input()
     if time % 10 == 0:
-        print(miner_a.blockchain)
-        print(miner_b.blockchain)
-    
+        miner_a.generate_block()

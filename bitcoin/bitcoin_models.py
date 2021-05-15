@@ -1,6 +1,8 @@
-from typing import List
 import random
 import sys
+
+from typing import Dict
+
 sys.path.append("..")
 
 from loguru import logger
@@ -13,7 +15,7 @@ class Block(Item):
     def __init__(self, miner: Node, sender_id: str, timestamp: int, created_at: int, prev_id: str):
         super().__init__(timestamp, sender_id, 0, created_at)
         self.prev_id = prev_id
-        self.size = 10 #TODO: calculate size
+        self.size = 1000  # TODO: calculate size
         self.miner = miner
 
     def __str__(self) -> str:
@@ -22,12 +24,12 @@ class Block(Item):
 
 # TODO: check timestamp logic and links (not) sending items
 class Miner(Node):
-    def __init__(self, pos_x: float, pos_y: float, mine_power: int, mine_cost=0,  timestamp=0):
-        super().__init__(pos_x, pos_y, timestamp) 
+    def __init__(self, pos_x: float, pos_y: float, mine_power: int, mine_cost=0, timestamp=0):
+        super().__init__(pos_x, pos_y, timestamp)
         self.mine_power = mine_power
         self.mine_cost = mine_cost
         self.blockchain: List[Block] = []
-        self.blockpool: dict[str, Block] = []
+        self.blockpool: Dict[str, Block] = dict()
         logger.info(f'Created miner {self.id}')
 
     def step(self):
@@ -37,17 +39,17 @@ class Miner(Node):
             self.__consume(item)
 
         if random.random() <= self.mine_power * (self.__get_difficulty()):
-            self.__generate_block()
+            self.generate_block()
 
     def connect(self, node: Node):
         # link = Link(self, node, os.getenv('BANDWIDTH')) #TODO: bandwidth
-        link = Link(self, node, 2**32)
-        self.outs.append(link) 
+        link = Link(self, node, 200)
+        self.outs.append(link)
         node.ins.append(link)
 
     def __consume(self, item: Item):
         if type(item) == Block:
-            logger.info(f'{self.id} RECEIVED BLOCK {item.id}')
+            print('hello there')
             self.__publish_block(item)
             if item.prev_id == self.blockchain[-1].id:
                 self.blockchain.append(item)
@@ -61,12 +63,12 @@ class Miner(Node):
             for block in self.blockchain:
                 self.__send_to(item.sender_id, block)
 
-    def __generate_block(self):
+    def generate_block(self):
         prev = self.__choose_prev_block()
         block = Block(self, self.id, self.timestamp, self.timestamp, prev.id)
-        self.blockchain.append(block)
+        self.blockchain.append(block)  # TODO:
+        self.blockpool[block.id] = block
         self.__publish_block(block)
-        logger.info(f'{self.id} GENERATED BLOCK {block.id}')
 
     def __publish_block(self, block: Block):
         for link in self.outs:
@@ -83,9 +85,4 @@ class Miner(Node):
                 link.send(item)
 
     def __get_difficulty(self) -> float:
-        return 2**244 / 2**256
-
-
-
-
-        
+        return 2 ** 2 / 2 ** 256
