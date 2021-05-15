@@ -60,10 +60,9 @@ class Link:
         self.timestamp += 1
         if len(self.queue) > 0:
             item = self.queue[-1]
+            item.delay -= 1
             if item.delay <= 0:
                 self.end.queue.appendleft(self.queue.pop())
-            else:
-                item.delay -= 1
 
     def send(self, item: Item):
         item.delay = self.bit_delay + (item.size / self.bandwidth)
