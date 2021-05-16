@@ -1,5 +1,7 @@
 .mypy_cache/
 .idea/
+logs/
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

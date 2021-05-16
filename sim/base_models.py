@@ -7,13 +7,19 @@ from sim import util
 
 
 class Item:
-    def __init__(self, timestamp: int, sender_id: str, size: int, created_at: int):
+    def __init__(self, sender_id: str, size: int, created_at: int):
         self.id = util.generate_uuid()
-        self.timestamp = timestamp
         self.size = size
         self.created_at = created_at
         self.sender_id = sender_id
-        self.delay = 0.0  # link will compute this after item creation
+
+
+# Wrapper class for items to prevent Links from modifying items pointed from multiple places
+class Packet:
+    def __init__(self, timestamp: int, payload: Item):
+        self.timestamp = timestamp
+        self.payload = payload
+        self.delay = 0
 
 
 class Node:
@@ -34,16 +40,13 @@ class Node:
     #   assumes can handle infinitely many inputs in one step
     def get_items(self) -> List[Item]:
         if len(self.queue) > 0:
-            item = self.queue[-1]
-            if item.timestamp < self.timestamp:
-                return [self.queue.pop()] + self.get_items()
+            packet = self.queue[-1]
+            if packet.timestamp < self.timestamp:
+                return [self.queue.pop().payload] + self.get_items()
             else:
                 return []
         else:
             return []
-
-    def __str__(self) -> str:
-        return f'Node {self.id}: pos=({self.pos.x}, {self.pos.y})'
 
 
 class Link:
@@ -66,5 +69,6 @@ class Link:
                 self.end.queue.appendleft(self.queue.pop())
 
     def send(self, item: Item):
-        item.delay = self.bit_delay + (item.size / self.bandwidth)
-        self.queue.appendleft(item)
+        packet = Packet(self.timestamp, item)
+        packet.delay = self.bit_delay + (item.size / self.bandwidth)
+        self.queue.appendleft(packet)

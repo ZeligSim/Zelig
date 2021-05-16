@@ -8,7 +8,7 @@ def connect(m1: Miner, m2: Miner):
 
 
 NODE_COUNT = 30
-SIMULATION_TIME = 500
+SIMULATION_TIME = 1000
 BLOCK_INTERVAL = 100  # iterations
 
 nodes = [Miner(f'MINER_{i}', i*10, i*10, 10) for i in range(NODE_COUNT)]
@@ -50,5 +50,10 @@ for node in nodes:
 plt.plot(active_links)
 plt.axhline(len(links), color='red')
 plt.show()
+
+# basic 2d map
+# for node in nodes:
+#     plt.scatter(node.pos.x, node.pos.y)
+# plt.show()
 
 
