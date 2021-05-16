@@ -7,11 +7,12 @@ def connect(m1: Miner, m2: Miner):
 
 
 SIMULATION_TIME = 1000
+BLOCK_INTERVAL = 100 # iterations
 
-miner_a = Miner('MINER_A', 0, 0, 1000)
-miner_b = Miner('MINER_B', 100, 100, 1000)
-miner_c = Miner('MINER_C', 200, 200, 1000)
-miner_d = Miner('MINER_D', 300, 300, 1000)
+miner_a = Miner('MINER_A', 0, 0, 100)
+miner_b = Miner('MINER_B', 100, 100, 100)
+miner_c = Miner('MINER_C', 200, 200, 100)
+miner_d = Miner('MINER_D', 300, 300, 100)
 
 connect(miner_a, miner_b)
 connect(miner_b, miner_c)
@@ -19,9 +20,13 @@ connect(miner_c, miner_d)
 
 nodes = [miner_a, miner_b, miner_c, miner_d]
 
-genesis_block = Block('satoshi', 'satoshi', 0, 0, 'satoshi')
+total_mine_power = sum([miner.mine_power for miner in nodes])
+difficulty = 1 / (BLOCK_INTERVAL * total_mine_power)
+
+genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
 
 for node in nodes:
+    node.difficulty = difficulty
     node.add_block(genesis_block)
 
 # one iter corresponds to 0.1 sec
@@ -39,3 +44,6 @@ for time in range(1, SIMULATION_TIME):
 
 for miner in nodes:
     miner.log_blockchain()
+
+for miner in nodes:
+    miner.log_stats()

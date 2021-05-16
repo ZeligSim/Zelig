@@ -38,6 +38,7 @@ class Miner(Node):
         self.mine_cost = mine_cost
         self.blockchain: Dict[str, Block] = dict()
         self.heads: List[Block] = []
+        self.difficulty = 0.01
         logger.info(f'CREATED MINER {self.name}')
 
     def step(self):
@@ -46,7 +47,7 @@ class Miner(Node):
         for item in items:
             self.__consume(item)
 
-        if random.random() <= self.mine_power * (self.__get_difficulty()):
+        if random.random() <= self.mine_power * self.difficulty:
             self.generate_block()
 
     def connect(self, node: Node):
@@ -69,6 +70,7 @@ class Miner(Node):
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR BLOCK {item.block_id}')
             self.__send_to(item.sender_id, self.blockchain[item.block_id])
+        # removed getblockchain message until implementation of dynamic leave/join of miners
 
     # FIXME: public for testing
     def generate_block(self, prev=None) -> Block:
@@ -94,7 +96,7 @@ class Miner(Node):
             msg = InvMessage(block.id, self.id, self.timestamp, 10, self.timestamp)
             link.send(msg)
 
-    # returns the head of the longest chain TODO
+    # returns the head of the longest chain
     def __choose_prev_block(self) -> Block:
         lengths = [self.__get_length(block) for block in self.heads]
         return self.heads[lengths.index(max(lengths))]
@@ -103,9 +105,6 @@ class Miner(Node):
         for link in self.outs:
             if link.end.id == node_id:
                 link.send(item)
-
-    def __get_difficulty(self) -> float:
-        return 2 ** 237 / 2 ** 256
 
     # get length of chain starting ending at `block`
     def __get_length(self, block, count=0):
@@ -117,10 +116,31 @@ class Miner(Node):
 
     # -- LOGGING / INFO METHODS --
     def log_blockchain(self):
+        head = self.__choose_prev_block()
         logger.warning(f'{self.name}')
         logger.warning(f'\tBLOCKCHAIN:')
         for block in self.blockchain.values():
             logger.warning(f'\t\t{block}')
         logger.warning(f'\tHEADS:')
         for block in self.heads:
-            logger.warning(f'\t\t{block}')
+            if block == head:
+                logger.warning(f'\t\t*** {block}')
+            else:
+                logger.warning(f'\t\t{block}')
+
+    def log_stats(self):
+        logger.warning(f'{self.name}')
+        logger.warning(f'\tSTATS:')
+        logger.warning(f'\t\tAverage block interval: {self.avg_block_interval()}')
+
+    def avg_block_interval(self):
+        total, count = 0, 0
+        head = self.__choose_prev_block()
+        while True:
+            block = self.blockchain.get(head.prev_id, None)
+            if block is None:
+                break
+            count += 1
+            total += head.created_at - block.created_at
+            head = block
+        return total / count
