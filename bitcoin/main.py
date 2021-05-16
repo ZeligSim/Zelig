@@ -24,17 +24,18 @@ genesis_block = Block('satoshi', 'satoshi', 0, 0, 'satoshi')
 for node in nodes:
     node.add_block(genesis_block)
 
+# one iter corresponds to 0.1 sec
 for time in range(1, SIMULATION_TIME):
-    for node in nodes:
+    for node in reversed(nodes):
         node.step()
     if time == 5:
         a_block = miner_a.generate_block()
-    if time == 40:
-        aa_block = miner_a.generate_block()
-    if time == 80:
-        c_block = miner_c.generate_block(prev=genesis_block)
-    if time == 120:
-        a_block = miner_a.generate_block()
+    # if time == 40:
+    #     aa_block = miner_a.generate_block()
+    # if time == 80:
+    #     c_block = miner_c.generate_block(prev=genesis_block)
+    # if time == 120:
+    #     a_block = miner_a.generate_block()
 
 
 for miner in nodes:

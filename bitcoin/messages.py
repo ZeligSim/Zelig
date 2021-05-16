@@ -7,12 +7,14 @@ from sim.base_models import *
 
 class InvMessage(Item):
     def __init__(self, block_id: str, sender_id: str, timestamp: int, size: int, created_at: int):
+        self.size = 100  # TODO: inv/getdata message size (61? Decker et al)
         super().__init__(timestamp, sender_id, size, created_at)
         self.block_id = block_id
 
 
 class GetDataMessage(Item):
     def __init__(self, block_id: str, sender_id: str, timestamp: int, size: int, created_at: int):
+        self.size = 100  # TODO: inv/getdata message size (61? Decker et al)
         super().__init__(timestamp, sender_id, size, created_at)
         self.block_id = block_id
 

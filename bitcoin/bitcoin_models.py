@@ -17,7 +17,7 @@ class Block(Item):
     def __init__(self, miner: Node, sender_id: str, timestamp: int, created_at: int, prev_id: str):
         super().__init__(timestamp, sender_id, 0, created_at)
         self.prev_id = prev_id
-        self.size = 1000  # TODO: calculate size
+        self.size = 1300000  # TODO
         self.miner = miner
 
     def __str__(self) -> str:
@@ -46,7 +46,7 @@ class Miner(Node):
 
     def connect(self, node: Node):
         # link = Link(self, node, os.getenv('BANDWIDTH')) #TODO: bandwidth
-        link = Link(self, node, 200)
+        link = Link(self, node, 5000000)  # 5 MB/s
         self.outs.append(link)
         node.ins.append(link)
 
