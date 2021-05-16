@@ -31,7 +31,7 @@ class Transaction(Item):
     def __init__(self, fee: int, sender_id: str, timestamp: int, created_at: int):
         super().__init__(sender_id, 0, created_at)
         self.fee = fee
-        self.size = 400 # bytes TODO
+        self.size = 400  # bytes TODO
 
 
 class Miner(Node):
@@ -56,11 +56,12 @@ class Miner(Node):
         if random.random() <= self.mine_power * self.difficulty:
             self.generate_block()
 
-    def connect(self, node: Node):
+    def connect(self, node: Node) -> Link:
         # link = Link(self, node, os.getenv('BANDWIDTH')) #TODO: bandwidth
         link = Link(self, node, 5000000)  # 5 MB/s
         self.outs.append(link)
         node.ins.append(link)
+        return link
 
     def __consume(self, item: Item):
         if type(item) == Block:
@@ -92,13 +93,14 @@ class Miner(Node):
         if msg.type == 'tx' and self.txpool.get(msg.item_id, None) is not None:
             return
         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+        self.blockchain[msg.item_id] = 3  # not none
         getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
         self.__send_to(msg.sender_id, getdata)
 
     def __consume_getdata(self, msg: GetDataMessage):
         self.__send_to(msg.sender_id, self.blockchain[msg.item_id])
-    # ------------------------------
 
+    # ------------------------------
 
     # FIXME: public for testing
     def generate_block(self, prev=None) -> Block:
@@ -156,7 +158,7 @@ class Miner(Node):
             else:
                 logger.warning(f'\t\t{block}')
 
-    def log_stats(self):
+    def log_statistics(self):
         logger.warning(f'{self.name}')
         logger.warning(f'\tSTATS:')
         logger.warning(f'\t\tAverage block interval: {self.avg_block_interval()}')
@@ -164,7 +166,7 @@ class Miner(Node):
         logger.warning(f'\t\tOrphan block rate:      {self.orphan_block_rate()}')
 
     def avg_block_interval(self):
-        total, count = 0, 0
+        total, count = 0, 1
         head = self.__choose_prev_block()
         while True:
             block = self.blockchain.get(head.prev_id, None)
@@ -179,6 +181,4 @@ class Miner(Node):
         return (len(self.heads) - 1) / len(self.blockchain)
 
     def avg_block_prop(self):
-        return self.stat_block_prop / (len(self.blockchain) - 1)
-
-
+        return self.stat_block_prop / (len(self.blockchain))
