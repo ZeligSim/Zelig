@@ -27,7 +27,10 @@ class Block(Item):
 
 
 class Transaction(Item):
-    pass  # TODO
+    def __init__(self, fee: int, sender_id: str, timestamp: int, created_at: int):
+        super().__init__(timestamp, sender_id, 0, created_at)
+        self.fee = fee
+        self.size = 400 # bytes TODO
 
 
 class Miner(Node):
@@ -37,8 +40,9 @@ class Miner(Node):
         self.mine_power = mine_power
         self.mine_cost = mine_cost
         self.blockchain: Dict[str, Block] = dict()
+        self.txpool: Dict[str, Transaction] = dict()
         self.heads: List[Block] = []
-        self.difficulty = 0.01
+        self.difficulty = 0
         logger.info(f'CREATED MINER {self.name}')
 
     def step(self):
@@ -59,18 +63,39 @@ class Miner(Node):
     def __consume(self, item: Item):
         if type(item) == Block:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
-            self.add_block(item)
-            self.__publish_block(item)
+            self.__consume_block(item)
+        elif type(item) == Transaction:
+            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
+            self.__consume_transaction(item)
         elif type(item) == InvMessage:
-            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR BLOCK {item.block_id}')
-            if item.block_id not in self.blockchain.keys():
-                logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-                msg = GetDataMessage(item.block_id, self.id, self.timestamp, 10, self.timestamp)
-                self.__send_to(item.sender_id, msg)
+            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR {item.type} {item.item_id}')
+            self.__consume_inv(item)
         elif type(item) == GetDataMessage:
-            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR BLOCK {item.block_id}')
-            self.__send_to(item.sender_id, self.blockchain[item.block_id])
-        # removed getblockchain message until implementation of dynamic leave/join of miners
+            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
+            self.__consume_getdata(item)
+
+    # -- CONSUMING MESSAGE TYPES --
+    def __consume_block(self, block: Block):
+        self.add_block(block)
+        self.__publish_item(block, 'block')
+
+    def __consume_transaction(self, tx: Transaction):
+        self.txpool[tx.id] = tx
+        self.__publish_item(tx, 'tx')
+
+    def __consume_inv(self, msg: InvMessage):
+        if msg.type == 'block' and self.blockchain.get(msg.item_id, None) is not None:
+            return
+        if msg.type == 'tx' and self.txpool.get(msg.item_id, None) is not None:
+            return
+        logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+        getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
+        self.__send_to(msg.sender_id, getdata)
+
+    def __consume_getdata(self, msg: GetDataMessage):
+        self.__send_to(msg.sender_id, self.blockchain[msg.item_id])
+    # ------------------------------
+
 
     # FIXME: public for testing
     def generate_block(self, prev=None) -> Block:
@@ -79,7 +104,7 @@ class Miner(Node):
         block = Block(self, self.id, self.timestamp, self.timestamp, prev.id)
         logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         self.add_block(block)
-        self.__publish_block(block)
+        self.__publish_item(block, 'block')
         return block
 
     # FIXME: public for testing
@@ -91,9 +116,9 @@ class Miner(Node):
             self.heads.remove(prev[0])
         self.heads.append(block)
 
-    def __publish_block(self, block: Block):
+    def __publish_item(self, item: Item, item_type: str):
         for link in self.outs:
-            msg = InvMessage(block.id, self.id, self.timestamp, 10, self.timestamp)
+            msg = InvMessage(item.id, item_type, self.id, self.timestamp, 10, self.timestamp)
             link.send(msg)
 
     # returns the head of the longest chain
@@ -132,6 +157,7 @@ class Miner(Node):
         logger.warning(f'{self.name}')
         logger.warning(f'\tSTATS:')
         logger.warning(f'\t\tAverage block interval: {self.avg_block_interval()}')
+        logger.warning(f'\t\tOrphan block rate:      {self.orphan_block_rate()}')
 
     def avg_block_interval(self):
         total, count = 0, 0
@@ -144,3 +170,8 @@ class Miner(Node):
             total += head.created_at - block.created_at
             head = block
         return total / count
+
+    def orphan_block_rate(self):
+        return (len(self.heads) - 1) / len(self.blockchain)
+
+

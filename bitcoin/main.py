@@ -31,7 +31,7 @@ for node in nodes:
 
 # one iter corresponds to 0.1 sec
 for time in range(1, SIMULATION_TIME):
-    for node in reversed(nodes):
+    for node in nodes:
         node.step()
     # if time == 5:
     #     a_block = miner_a.generate_block()
