@@ -12,7 +12,7 @@ from messages import InvMessage, GetDataMessage
 
 logger.remove()
 logger.add(sys.stdout, level='INFO')
-logger.add('bitcoin_logs.txt', level='DEBUG')
+logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
 class Block(Item):
