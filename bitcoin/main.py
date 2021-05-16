@@ -34,7 +34,7 @@ for time in range(1, SIMULATION_TIME):
     for node in nodes:
         node.step()
     # if time == 5:
-    #     a_block = miner_a.generate_block()
+    #    a_block = miner_a.generate_block()
     # if time == 40:
     #     aa_block = miner_a.generate_block()
     # if time == 80:

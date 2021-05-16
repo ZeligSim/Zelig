@@ -1,5 +1,6 @@
 import random
 import sys
+from copy import deepcopy
 
 from typing import Dict
 
@@ -17,7 +18,7 @@ logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 class Block(Item):
     def __init__(self, miner: Node, sender_id: str, timestamp: int, created_at: int, prev_id: str):
-        super().__init__(timestamp, sender_id, 0, created_at)
+        super().__init__(sender_id, 0, created_at)
         self.prev_id = prev_id
         self.size = 1300000  # TODO
         self.miner = miner
@@ -28,7 +29,7 @@ class Block(Item):
 
 class Transaction(Item):
     def __init__(self, fee: int, sender_id: str, timestamp: int, created_at: int):
-        super().__init__(timestamp, sender_id, 0, created_at)
+        super().__init__(sender_id, 0, created_at)
         self.fee = fee
         self.size = 400 # bytes TODO
 
@@ -43,6 +44,7 @@ class Miner(Node):
         self.txpool: Dict[str, Transaction] = dict()
         self.heads: List[Block] = []
         self.difficulty = 0
+        self.stat_block_prop = 0
         logger.info(f'CREATED MINER {self.name}')
 
     def step(self):
@@ -63,6 +65,7 @@ class Miner(Node):
     def __consume(self, item: Item):
         if type(item) == Block:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
+            self.stat_block_prop += self.timestamp - item.created_at
             self.__consume_block(item)
         elif type(item) == Transaction:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
@@ -157,6 +160,7 @@ class Miner(Node):
         logger.warning(f'{self.name}')
         logger.warning(f'\tSTATS:')
         logger.warning(f'\t\tAverage block interval: {self.avg_block_interval()}')
+        logger.warning(f'\t\tAverage block prop.:    {self.avg_block_prop()}')
         logger.warning(f'\t\tOrphan block rate:      {self.orphan_block_rate()}')
 
     def avg_block_interval(self):
@@ -173,5 +177,8 @@ class Miner(Node):
 
     def orphan_block_rate(self):
         return (len(self.heads) - 1) / len(self.blockchain)
+
+    def avg_block_prop(self):
+        return self.stat_block_prop / (len(self.blockchain) - 1)
 
 
