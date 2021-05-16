@@ -6,7 +6,7 @@ def connect(m1: Miner, m2: Miner):
     m2.connect(m1)
 
 
-SIMULATION_TIME = 200
+SIMULATION_TIME = 1000
 
 miner_a = Miner('MINER_A', 0, 0, 1000)
 miner_b = Miner('MINER_B', 100, 100, 1000)
@@ -28,8 +28,8 @@ for node in nodes:
 for time in range(1, SIMULATION_TIME):
     for node in reversed(nodes):
         node.step()
-    if time == 5:
-        a_block = miner_a.generate_block()
+    # if time == 5:
+    #     a_block = miner_a.generate_block()
     # if time == 40:
     #     aa_block = miner_a.generate_block()
     # if time == 80:
@@ -37,7 +37,5 @@ for time in range(1, SIMULATION_TIME):
     # if time == 120:
     #     a_block = miner_a.generate_block()
 
-
 for miner in nodes:
     miner.log_blockchain()
-

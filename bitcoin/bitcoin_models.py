@@ -10,7 +10,9 @@ from loguru import logger
 from sim.base_models import *
 from messages import InvMessage, GetDataMessage
 
-logger.add('bitcoin_logs.txt')
+logger.remove()
+logger.add(sys.stdout, level='INFO')
+logger.add('bitcoin_logs.txt', level='DEBUG')
 
 
 class Block(Item):
@@ -24,7 +26,10 @@ class Block(Item):
         return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
 
 
-# TODO: check timestamp logic and links (not) sending items
+class Transaction(Item):
+    pass  # TODO
+
+
 class Miner(Node):
     def __init__(self, name: str, pos_x: float, pos_y: float, mine_power: int, mine_cost=0, timestamp=0):
         super().__init__(pos_x, pos_y, timestamp)
@@ -56,13 +61,13 @@ class Miner(Node):
             self.add_block(item)
             self.__publish_block(item)
         elif type(item) == InvMessage:
-            logger.info(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR BLOCK {item.block_id}')
+            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR BLOCK {item.block_id}')
             if item.block_id not in self.blockchain.keys():
-                logger.info(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+                logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
                 msg = GetDataMessage(item.block_id, self.id, self.timestamp, 10, self.timestamp)
                 self.__send_to(item.sender_id, msg)
         elif type(item) == GetDataMessage:
-            logger.info(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR BLOCK {item.block_id}')
+            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR BLOCK {item.block_id}')
             self.__send_to(item.sender_id, self.blockchain[item.block_id])
 
     # FIXME: public for testing
@@ -70,7 +75,7 @@ class Miner(Node):
         if prev is None:
             prev = self.__choose_prev_block()
         block = Block(self, self.id, self.timestamp, self.timestamp, prev.id)
-        logger.info(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id}')
+        logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         self.add_block(block)
         self.__publish_block(block)
         return block
@@ -100,7 +105,7 @@ class Miner(Node):
                 link.send(item)
 
     def __get_difficulty(self) -> float:
-        return 2 ** 2 / 2 ** 256
+        return 2 ** 237 / 2 ** 256
 
     # get length of chain starting ending at `block`
     def __get_length(self, block, count=0):
@@ -112,10 +117,10 @@ class Miner(Node):
 
     # -- LOGGING / INFO METHODS --
     def log_blockchain(self):
-        logger.info(f'{self.name}')
-        logger.info(f'\tBLOCKCHAIN:')
+        logger.warning(f'{self.name}')
+        logger.warning(f'\tBLOCKCHAIN:')
         for block in self.blockchain.values():
-            logger.info(f'\t\t{block}')
-        logger.info(f'\tHEADS:')
+            logger.warning(f'\t\t{block}')
+        logger.warning(f'\tHEADS:')
         for block in self.heads:
-            logger.info(f'\t\t{block}')
+            logger.warning(f'\t\t{block}')

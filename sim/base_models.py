@@ -65,7 +65,6 @@ class Link:
             if item.delay <= 0:
                 self.end.queue.appendleft(self.queue.pop())
 
-
     def send(self, item: Item):
         item.delay = self.bit_delay + (item.size / self.bandwidth)
         self.queue.appendleft(item)
