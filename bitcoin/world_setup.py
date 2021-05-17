@@ -1,7 +1,6 @@
 import matplotlib.pyplot as plt
 import pickle
 import networkx as nx
-from multiprocessing import Pool
 
 from models import Block, Miner
 
