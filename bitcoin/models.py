@@ -12,7 +12,7 @@ from sim.base_models import *
 from messages import InvMessage, GetDataMessage
 
 logger.remove()
-logger.add(sys.stdout, level='INFO')
+logger.add(sys.stdout, level='DEBUG')
 logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
@@ -66,10 +66,11 @@ class Miner(Node):
         # link = Link(self, node, os.getenv('BANDWIDTH')) #TODO: bandwidth
         links = []
         for node in argv:
-            link = Link(self, node, 5000000)  # 5 MB/s
-            self.outs.append(link)
-            node.ins.append(link)
-            links.append(link)
+            if node not in [link.end for link in self.outs]:
+                link = Link(self, node, 5000000)  # 5 MB/s
+                self.outs.append(link)
+                node.ins.append(link)
+                links.append(link)
         return links
 
     def __consume(self, item: Item):
@@ -101,13 +102,13 @@ class Miner(Node):
         if msg.type == 'block':
             if self.blockchain.get(msg.item_id, None) is None:
                 logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-                self.blockchain[msg.item_id] = 3  # not none
+                self.blockchain[msg.item_id] = 'placeholder'  # not none
                 getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
                 self.__send_to(msg.sender_id, getdata)
         elif msg.type == 'tx':
             if self.txpool.get(msg.item_id, None) is None:
                 logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-                self.txpool[msg.item_id] = 3  # not none
+                self.txpool[msg.item_id] = 'placeholder'  # not none
                 getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
                 self.__send_to(msg.sender_id, getdata)
 
@@ -153,7 +154,7 @@ class Miner(Node):
 
     # returns the head of the longest chain
     def __choose_prev_block(self) -> Block:
-        lengths = [self.__get_length(block) for block in self.heads]
+        lengths = [self.__get_length(block) for block in self.heads if block != 'placeholder']
         return self.heads[lengths.index(max(lengths))]
 
     def __send_to(self, node_id: str, item: Item):

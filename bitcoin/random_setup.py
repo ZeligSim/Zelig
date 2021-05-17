@@ -3,6 +3,7 @@ import pickle
 import random
 import math
 import networkx as nx
+from itertools import combinations
 from multiprocessing import Pool
 
 from models import Block, Miner
@@ -16,17 +17,17 @@ BLOCK_INTERVAL = 100  # iterations
 nodes, links = [], []
 
 for i in range(NODE_COUNT):
-    x = 1 * math.cos(2 * math.pi * i / NODE_COUNT)
-    y = 1 * math.sin(2 * math.pi * i / NODE_COUNT)
+    x = math.cos(2 * math.pi * i / NODE_COUNT)
+    y = math.sin(2 * math.pi * i / NODE_COUNT)
     node = Miner(f'MINER_{i}', x, y, 100)
     nodes.append(node)
 
 for node in nodes:
-    for i in range(CONNECTIONS_PER_NODE):
-        m2 = random.choice(nodes)
-        while m2 == node:
-            m2 = random.choice(nodes)
-        links += node.connect(m2)
+    perms = combinations(nodes[:nodes.index(node)] + nodes[nodes.index(node)+1:], CONNECTIONS_PER_NODE)
+    to_connect = random.choice(list(perms))
+    for n2 in to_connect:
+        links += node.connect(n2)
+        links += n2.connect(node)
 
 total_mine_power = sum([miner.mine_power for miner in nodes])
 difficulty = 1 / (BLOCK_INTERVAL * total_mine_power)
@@ -44,7 +45,6 @@ for time in range(1, SIMULATION_TIME):
     for node in nodes:
         node.step()
 
-
 # LOG / STATS
 for node in nodes:
     node.log_blockchain()
@@ -52,11 +52,13 @@ for node in nodes:
     with open(f'dumps/{node.name}', 'wb+') as f:
         pickle.dump(node, f)
 
+
 plt.plot(active_links)
 plt.axhline(len(links), color='red')
 plt.title('Number of active links')
 plt.show()
 
+# VISUALIZE NETWORK
 if NODE_COUNT <= 100:
     G = nx.DiGraph()
     for node in nodes:
@@ -69,6 +71,22 @@ if NODE_COUNT <= 100:
     nx.draw_networkx_edges(G, nx.get_node_attributes(G, 'pos'),
                            connectionstyle="arc3,rad=0.25")
     plt.show()
+
+# VISUALIZE CHAINS
+miner = nodes[0]
+G = nx.DiGraph()
+for idx, block in enumerate(miner.blockchain.values()):
+    G.add_node(block, pos=(idx, 0))
+for idx, block in enumerate(miner.blockchain.values()):
+    parent = miner.blockchain.get(block.prev_id, None)
+    if parent is not None:
+        G.add_edge(block, parent)
+fig, ax = plt.subplots()
+nx.draw_networkx_nodes(G, nx.get_node_attributes(G, 'pos'))
+nx.draw_networkx_edges(G, nx.get_node_attributes(G, 'pos'),
+                       connectionstyle="arc3,rad=0.25")
+plt.show()
+
 
 
 
