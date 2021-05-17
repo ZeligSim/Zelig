@@ -1,6 +1,5 @@
 import random
 import sys
-from copy import deepcopy
 
 from typing import Dict
 
@@ -28,7 +27,7 @@ class Block(Item):
 
 
 class Transaction(Item):
-    def __init__(self, fee: int, sender_id: str, timestamp: int, created_at: int):
+    def __init__(self, fee: int, sender_id: str, created_at: int):
         super().__init__(sender_id, 0, created_at)
         self.fee = fee
         self.size = 400  # bytes TODO
@@ -47,12 +46,17 @@ class Miner(Node):
         self.stat_block_prop = 0
         logger.info(f'CREATED MINER {self.name}')
 
+    def __str__(self) -> str:
+        return self.name
+
     def step(self):
         super().step()
         items = self.get_items()
         for item in items:
             self.__consume(item)
 
+        if random.random() <= 0.001:
+            self.__generate_transaction()
         if random.random() <= self.mine_power * self.difficulty:
             self.generate_block()
 
@@ -88,17 +92,24 @@ class Miner(Node):
         self.__publish_item(tx, 'tx')
 
     def __consume_inv(self, msg: InvMessage):
-        if msg.type == 'block' and self.blockchain.get(msg.item_id, None) is not None:
-            return
-        if msg.type == 'tx' and self.txpool.get(msg.item_id, None) is not None:
-            return
-        logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-        self.blockchain[msg.item_id] = 3  # not none
-        getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
-        self.__send_to(msg.sender_id, getdata)
+        if msg.type == 'block':
+            if self.blockchain.get(msg.item_id, None) is None:
+                logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+                self.blockchain[msg.item_id] = 3  # not none
+                getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
+                self.__send_to(msg.sender_id, getdata)
+        elif msg.type == 'tx':
+            if self.txpool.get(msg.item_id, None) is None:
+                logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+                self.txpool[msg.item_id] = 3  # not none
+                getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
+                self.__send_to(msg.sender_id, getdata)
 
     def __consume_getdata(self, msg: GetDataMessage):
-        self.__send_to(msg.sender_id, self.blockchain[msg.item_id])
+        if msg.type == 'block':
+            self.__send_to(msg.sender_id, self.blockchain[msg.item_id])
+        elif msg.type == 'tx':
+            self.__send_to(msg.sender_id, self.txpool[msg.item_id])
 
     # ------------------------------
 
@@ -120,6 +131,13 @@ class Miner(Node):
         if len(prev) > 0:
             self.heads.remove(prev[0])
         self.heads.append(block)
+
+    def __generate_transaction(self) -> Transaction:
+        fee = 10
+        tx = Transaction(fee, self.id, self.timestamp)
+        self.txpool[tx.id] = tx
+        self.__publish_item(tx, 'tx')
+        return tx
 
     def __publish_item(self, item: Item, item_type: str):
         for link in self.outs:
