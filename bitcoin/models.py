@@ -1,5 +1,6 @@
 import random
 import sys
+import numpy as np
 
 from typing import Dict
 
@@ -19,8 +20,8 @@ class Block(Item):
     def __init__(self, miner: Node, sender_id: str, timestamp: int, created_at: int, prev_id: str):
         super().__init__(sender_id, 0, created_at)
         self.prev_id = prev_id
-        self.size = 1300000  # TODO
         self.miner = miner
+        self.size = np.random.normal(1.19, 0.26) * 10**6
 
     def __str__(self) -> str:
         return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
@@ -44,6 +45,7 @@ class Miner(Node):
         self.heads: List[Block] = []
         self.difficulty = 0
         self.stat_block_prop = 0
+        self.stat_block_rcvs: Dict[str, int] = dict()
         logger.info(f'CREATED MINER {self.name}')
 
     def __str__(self) -> str:
@@ -55,12 +57,12 @@ class Miner(Node):
         for item in items:
             self.__consume(item)
 
-        if random.random() <= 0.001:
-            self.__generate_transaction()
+        # if random.random() <= 0.001:
+        #     self.__generate_transaction()
         if random.random() <= self.mine_power * self.difficulty:
             self.generate_block()
 
-    def connect(self, *argv) -> Link:
+    def connect(self, *argv) -> List[Link]:
         # link = Link(self, node, os.getenv('BANDWIDTH')) #TODO: bandwidth
         links = []
         for node in argv:
@@ -87,6 +89,7 @@ class Miner(Node):
 
     # -- CONSUMING MESSAGE TYPES --
     def __consume_block(self, block: Block):
+        self.stat_block_rcvs[block.id] = self.timestamp
         self.add_block(block)
         self.__publish_item(block, 'block')
 
@@ -123,6 +126,7 @@ class Miner(Node):
         block = Block(self, self.id, self.timestamp, self.timestamp, prev.id)
         logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         self.add_block(block)
+        self.stat_block_rcvs[block.id] = self.timestamp
         self.__publish_item(block, 'block')
         return block
 
@@ -182,24 +186,7 @@ class Miner(Node):
     def log_statistics(self):
         logger.warning(f'{self.name}')
         logger.warning(f'\tSTATS:')
-        logger.warning(f'\t\tAverage block interval: {self.avg_block_interval()}')
         logger.warning(f'\t\tAverage block prop.:    {self.avg_block_prop()}')
-        logger.warning(f'\t\tOrphan block rate:      {self.orphan_block_rate()}')
-
-    def avg_block_interval(self):
-        total, count = 0, 1
-        head = self.__choose_prev_block()
-        while True:
-            block = self.blockchain.get(head.prev_id, None)
-            if block is None:
-                break
-            count += 1
-            total += head.created_at - block.created_at
-            head = block
-        return total / count
-
-    def orphan_block_rate(self):
-        return (len(self.heads) - 1) / len(self.blockchain)
 
     def avg_block_prop(self):
         return self.stat_block_prop / (len(self.blockchain))
