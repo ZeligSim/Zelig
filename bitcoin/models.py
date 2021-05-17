@@ -60,12 +60,15 @@ class Miner(Node):
         if random.random() <= self.mine_power * self.difficulty:
             self.generate_block()
 
-    def connect(self, node: Node) -> Link:
+    def connect(self, *argv) -> Link:
         # link = Link(self, node, os.getenv('BANDWIDTH')) #TODO: bandwidth
-        link = Link(self, node, 5000000)  # 5 MB/s
-        self.outs.append(link)
-        node.ins.append(link)
-        return link
+        links = []
+        for node in argv:
+            link = Link(self, node, 5000000)  # 5 MB/s
+            self.outs.append(link)
+            node.ins.append(link)
+            links.append(link)
+        return links
 
     def __consume(self, item: Item):
         if type(item) == Block:

@@ -1,26 +1,40 @@
 import matplotlib.pyplot as plt
 import pickle
-import random
 import networkx as nx
+from multiprocessing import Pool
 
-from bitcoin_models import Block, Miner
+from models import Block, Miner
+
 
 def connect(m1: Miner, m2: Miner):
     m1.connect(m2)
     m2.connect(m1)
 
 
-NODE_COUNT = 15
-SIMULATION_TIME = 1000
-BLOCK_INTERVAL = 100  # iterations
+SIMULATION_TIME = 100000
+BLOCK_INTERVAL = 6000  # iterations
 
-nodes = [Miner(f'MINER_{i}', (-1)**i, i, 10) for i in range(NODE_COUNT)]
+us = Miner('US', 80, 150, 73)
+ch = Miner('CH', 600, 180, 650)
+eu = Miner('EU', 360, 110, 20)
+ru = Miner('RU', 520, 80, 69)
+af = Miner('AF', 400, 250, 5)
+au = Miner('AU', 690, 360, 15)
+me = Miner('ME', 445, 175, 120)
+sa = Miner('SA', 190, 320, 15)
+
+nodes = [us, ch, eu, ru, af, au, me, sa]
 
 links = []
-for i1, m1 in enumerate(nodes):
-    for i2, m2 in enumerate(nodes):
-        if m1 != m2 and abs(i2 - i1) < 2:
-            links.append(m1.connect(m2))
+links += us.connect(sa, eu, af)
+links += ch.connect(au, me, eu, ru, af)
+links += eu.connect(us, ch, me, ru, af)
+links += ru.connect(ch, eu, me)
+links += af.connect(us, sa, me, eu, ch, au)
+links += au.connect(ch, af)
+links += me.connect(af, ru, eu, ch)
+links += sa.connect(us, af)
+
 
 total_mine_power = sum([miner.mine_power for miner in nodes])
 difficulty = 1 / (BLOCK_INTERVAL * total_mine_power)
@@ -37,14 +51,6 @@ for time in range(1, SIMULATION_TIME):
     active_links.append(sum([len(link.queue) > 0 for link in links]))
     for node in nodes:
         node.step()
-    # if time == 5:
-    #    a_block = nodes[0].generate_block()
-    # if time == 40:
-    #     aa_block = miner_a.generate_block()
-    # if time == 80:
-    #     c_block = miner_c.generate_block(prev=genesis_block)
-    # if time == 120:
-    #     a_block = miner_a.generate_block()
 
 for node in nodes:
     node.log_blockchain()
@@ -59,24 +65,18 @@ plt.title('Number of active links')
 plt.show()
 
 G = nx.DiGraph()
-
 for node in nodes:
     G.add_node(node, pos=(node.pos.x, node.pos.y))
-
 for node in nodes:
     for link in node.outs:
         G.add_edge(node, link.end)
-
-plt.figure()
-nx.draw_networkx_nodes(G, nx.get_node_attributes(G, 'pos'))
+img = plt.imread("etc/world.webp")
+fig, ax = plt.subplots()
+ax.imshow(img)
+nx.draw_networkx_nodes(G, nx.get_node_attributes(G, 'pos'), node_color='red')
 nx.draw_networkx_edges(G, nx.get_node_attributes(G, 'pos'),
-                       connectionstyle="arc3,rad=0.25")
+                       connectionstyle="arc3,rad=0")
 plt.show()
 
-
-# basic 2d map
-# for node in nodes:
-#     plt.scatter(node.pos.x, node.pos.y)
-# plt.show()
 
 
