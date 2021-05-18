@@ -52,8 +52,8 @@ class Miner(Node):
     def __str__(self) -> str:
         return self.name
 
-    def step(self):
-        super().step()
+    def step(self, seconds: float):
+        super().step(seconds)
         items = self.get_items()
         for item in items:
             self.__consume(item)

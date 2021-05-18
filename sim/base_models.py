@@ -35,10 +35,10 @@ class Node:
         self.ins = []
         self.outs = []
 
-    def step(self):
+    def step(self, seconds: float):
         self.timestamp += 1
         for link in self.outs:
-            link.step()
+            link.step(seconds)
 
     # get items to operate on current time step
     #   assumes can handle infinitely many inputs in one step
@@ -61,11 +61,11 @@ class Link:
         self.end = end
         self.queue: deque = deque()
 
-    def step(self):
+    def step(self, seconds: float):
         self.timestamp += 1
         if len(self.queue) > 0:
             item = self.queue[-1]
-            item.delay -= 0.1
+            item.delay -= seconds
             item.timestamp = self.timestamp
             if item.delay <= 0:
                 self.end.queue.appendleft(self.queue.pop())

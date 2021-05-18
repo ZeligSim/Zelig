@@ -5,7 +5,7 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 
 from bitcoin.models import Block, Miner
-from sim.base_models import Region
+from sim.util import Region
 
 
 @hydra.main(config_name="config")
@@ -29,7 +29,8 @@ def main(cfg: DictConfig):
 
     for time in range(1, cfg.simulation_iters):
         for node in nodes:
-            node.step()
+            node.step(cfg.iter_seconds)
+
 
 main()
 
