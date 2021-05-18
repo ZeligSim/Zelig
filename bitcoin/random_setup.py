@@ -9,9 +9,9 @@ from multiprocessing import Pool
 from models import Block, Miner
 
 
-NODE_COUNT = 8
-SIMULATION_TIME = 1000
-CONNECTIONS_PER_NODE = 2
+NODE_COUNT = 100
+SIMULATION_TIME = 0
+CONNECTIONS_PER_NODE = 8
 BLOCK_INTERVAL = 100  # iterations
 
 nodes, links = [], []
@@ -23,9 +23,8 @@ for i in range(NODE_COUNT):
     nodes.append(node)
 
 for node in nodes:
-    perms = combinations(nodes[:nodes.index(node)] + nodes[nodes.index(node)+1:], CONNECTIONS_PER_NODE)
-    to_connect = random.choice(list(perms))
-    for n2 in to_connect:
+    for i in range(CONNECTIONS_PER_NODE):
+        n2 = random.choice(nodes[:nodes.index(node)] + nodes[nodes.index(node)+1:])
         links += node.connect(n2)
         links += n2.connect(node)
 
@@ -66,7 +65,8 @@ if NODE_COUNT <= 100:
     for node in nodes:
         for link in node.outs:
             G.add_edge(node, link.end)
-    fig, ax = plt.subplots()
+    # fig, ax = plt.subplots()
+    fig = plt.figure(figsize=(500, 500))
     nx.draw_networkx_nodes(G, nx.get_node_attributes(G, 'pos'))
     nx.draw_networkx_edges(G, nx.get_node_attributes(G, 'pos'),
                            connectionstyle="arc3,rad=0.25")
