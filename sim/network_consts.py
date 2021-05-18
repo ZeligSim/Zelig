@@ -1,5 +1,4 @@
-from models import Region
-
+from sim.util import Region
 
 def latency(a: Region, b: Region) -> int:
     latency = LATENCY.get((a, b), None)
@@ -13,71 +12,71 @@ def speed(src: Region, dest: Region) -> int:
 
 
 # 2021 - https://testmy.net/country
-SPEED = { # MB/s
+SPEED = { # Mbps => MB/s
     Region.US: {
-        'down': 55.3 / 8,
-        'up': 19.2 / 8,
+        'down': 55.3 * (10**6 / 8),
+        'up': 19.2 * (10**6 / 8),
     },
     Region.EU: {
-        'down': 65.0 / 8,
-        'up': 34.0 / 8,
+        'down': 65.0 * (10**6 / 8),
+        'up': 34.0 * (10**6 / 8),
     },
     Region.SA: {
-        'down': 23.4 / 8,
-        'up': 6.4 / 8, # ?!
+        'down': 23.4 * (10**6 / 8),
+        'up': 6.4 * (10**6 / 8), # ?!
     },
     Region.AP: {
-        'down': 32.2 / 8,
-        'up': 23.5 / 8,
+        'down': 32.2 * (10**6 / 8),
+        'up': 23.5 * (10**6 / 8),
     },
     Region.JP: {
-        'down': 47.8 / 8,
-        'up': 54.1 / 8,
+        'down': 47.8 * (10**6 / 8),
+        'up': 54.1 * (10**6 / 8),
     },
     Region.AU: {
-        'down': 51.2 / 8,
-        'up': 16.8 / 8,
+        'down': 51.2 * (10**6 / 8),
+        'up': 16.8 * (10**6 / 8),
     },
     Region.RU: {
-        'down': 23.2 / 8,
-        'up': 22.1 / 8,
+        'down': 23.2 * (10**6 / 8),
+        'up': 22.1 * (10**6 / 8),
     },
 }
 
 # 2021 - https://wondernetwork.com/pings
-LATENCY = {  # milliseconds
-    (Region.US, Region.US): 0,
-    (Region.US, Region.EU): 73,
-    (Region.US, Region.SA): 164,
-    (Region.US, Region.AP): 227,
-    (Region.US, Region.JP): 176,
-    (Region.US, Region.AU): 152,
-    (Region.US, Region.RU): 118,
+LATENCY = {  # seconds
+    (Region.US, Region.US): 0 * 0.001,
+    (Region.US, Region.EU): 73 * 0.001,
+    (Region.US, Region.SA): 164 * 0.001,
+    (Region.US, Region.AP): 227 * 0.001,
+    (Region.US, Region.JP): 176 * 0.001,
+    (Region.US, Region.AU): 152 * 0.001,
+    (Region.US, Region.RU): 118 * 0.001,
 
-    (Region.EU, Region.EU): 0,
-    (Region.EU, Region.SA): 244,
-    (Region.EU, Region.AP): 226,
-    (Region.EU, Region.JP): 235,
-    (Region.EU, Region.AU): 258,
-    (Region.EU, Region.RU): 47,
+    (Region.EU, Region.EU): 0 * 0.001,
+    (Region.EU, Region.SA): 244 * 0.001,
+    (Region.EU, Region.AP): 226 * 0.001,
+    (Region.EU, Region.JP): 235 * 0.001,
+    (Region.EU, Region.AU): 258 * 0.001,
+    (Region.EU, Region.RU): 47 * 0.001,
 
-    (Region.SA, Region.SA): 0,
-    (Region.SA, Region.AP): 442,
-    (Region.SA, Region.JP): 315,
-    (Region.SA, Region.AU): 327,
-    (Region.SA, Region.RU): 284,
+    (Region.SA, Region.SA): 0 * 0.001,
+    (Region.SA, Region.AP): 442 * 0.001,
+    (Region.SA, Region.JP): 315 * 0.001,
+    (Region.SA, Region.AU): 327 * 0.001,
+    (Region.SA, Region.RU): 284 * 0.001,
 
-    (Region.AP, Region.AP): 0,
-    (Region.AP, Region.JP): 143,
-    (Region.AP, Region.AU): 377,
-    (Region.AP, Region.RU): 119,
+    (Region.AP, Region.AP): 0 * 0.001,
+    (Region.AP, Region.JP): 143 * 0.001,
+    (Region.AP, Region.AU): 377 * 0.001,
+    (Region.AP, Region.RU): 119 * 0.001,
 
-    (Region.JP, Region.JP): 0,
-    (Region.JP, Region.AU): 160,
-    (Region.JP, Region.RU): 288,
+    (Region.JP, Region.JP): 0 * 0.001,
+    (Region.JP, Region.AU): 160 * 0.001,
+    (Region.JP, Region.RU): 288 * 0.001,
 
-    (Region.AU, Region.AU): 0,
-    (Region.AU, Region.RU): 324,
+    (Region.AU, Region.AU): 0 * 0.001,
+    (Region.AU, Region.RU): 324 * 0.001,
 
-    (Region.RU, Region.RU): 0,
+    (Region.RU, Region.RU): 0 * 0.001,
 }

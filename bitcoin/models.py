@@ -3,28 +3,17 @@ import sys
 import numpy as np
 
 from typing import Dict
-from enum import Enum
 
 sys.path.append("..")
 
 from loguru import logger
 
 from sim.base_models import *
-from messages import InvMessage, GetDataMessage
+from bitcoin.messages import InvMessage, GetDataMessage
 
 logger.remove()
 logger.add(sys.stdout, level='DEBUG')
 logger.add('logs/bitcoin_logs.txt', level='DEBUG')
-
-
-class Region(Enum):
-    US = 'UnitedStates'
-    EU = 'Europe'
-    SA = 'SouthAmerica'
-    AP = 'AsiaPacific'
-    JP = 'Japan'
-    AU = 'Australia'
-    RU = 'Russia'
 
 
 class Block(Item):
@@ -75,11 +64,10 @@ class Miner(Node):
             self.generate_block()
 
     def connect(self, *argv) -> List[Link]:
-        # link = Link(self, node, os.getenv('BANDWIDTH')) #TODO: bandwidth
         links = []
         for node in argv:
             if node not in [link.end for link in self.outs]:
-                link = Link(self, node, 5000000)  # 5 MB/s
+                link = Link(self, node)
                 self.outs.append(link)
                 node.ins.append(link)
                 links.append(link)

@@ -1,11 +1,13 @@
 from collections import deque
+from enum import Enum
+
 from loguru import logger
 
 from typing import List
 
 from sim import util
 from sim.network_consts import speed, latency
-
+from sim.util import Region
 
 class Item:
     def __init__(self, sender_id: str, size: int, created_at: int):
@@ -52,10 +54,9 @@ class Node:
 
 
 class Link:
-    def __init__(self, start: Node, end: Node, bandwidth: float):
+    def __init__(self, start: Node, end: Node):
         self.id = util.generate_uuid()
         self.timestamp = start.timestamp
-        self.bandwidth = bandwidth
         self.start = start
         self.end = end
         self.queue: deque = deque()
@@ -75,5 +76,6 @@ class Link:
         lat = latency(self.start.region, self.end.region)
         trans = (item.size / speed(self.start.region, self.end.region))
         packet.delay = lat + trans
+
 
         self.queue.appendleft(packet)

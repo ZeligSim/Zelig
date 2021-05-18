@@ -1,5 +1,16 @@
 import uuid
 import math
+from enum import Enum
+
+
+class Region(Enum):
+    US = 'UnitedStates'
+    EU = 'Europe'
+    SA = 'SouthAmerica'
+    AP = 'AsiaPacific'
+    JP = 'Japan'
+    AU = 'Australia'
+    RU = 'Russia'
 
 
 class Coords:
