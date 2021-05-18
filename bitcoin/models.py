@@ -48,7 +48,7 @@ class Transaction(Item):
 class Miner(Node):
     def __init__(self, name: str, pos_x: float, pos_y: float, mine_power: int, region: Region, mine_cost=0,
                  timestamp=0):
-        super().__init__(pos_x, pos_y, timestamp)
+        super().__init__(pos_x, pos_y, region, timestamp)
         self.name = name
         self.mine_power = mine_power
         self.mine_cost = mine_cost
@@ -56,7 +56,6 @@ class Miner(Node):
         self.txpool: Dict[str, Transaction] = dict()
         self.heads: List[Block] = []
         self.difficulty = 0
-        self.region = region
         self.stat_block_prop = 0
         self.stat_block_rcvs: Dict[str, int] = dict()
         logger.info(f'CREATED MINER {self.name}')

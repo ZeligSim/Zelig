@@ -4,6 +4,7 @@ from loguru import logger
 from typing import List
 
 from sim import util
+from sim.network_consts import speed, latency
 
 
 class Item:
@@ -23,11 +24,12 @@ class Packet:
 
 
 class Node:
-    def __init__(self, pos_x: float, pos_y: float, timestamp=0):
+    def __init__(self, pos_x: float, pos_y: float, region, timestamp=0):
         self.id = util.generate_uuid()
         self.timestamp = timestamp
         self.pos = util.Coords(pos_x, pos_y)
         self.queue: deque = deque()
+        self.region = region
         self.ins = []
         self.outs = []
 
@@ -54,7 +56,6 @@ class Link:
         self.id = util.generate_uuid()
         self.timestamp = start.timestamp
         self.bandwidth = bandwidth
-        self.bit_delay = 0  # TODO:
         self.start = start
         self.end = end
         self.queue: deque = deque()
@@ -63,12 +64,16 @@ class Link:
         self.timestamp += 1
         if len(self.queue) > 0:
             item = self.queue[-1]
-            item.delay -= 0.1  # TODO: subtract seconds interval
+            item.delay -= 0.1
             item.timestamp = self.timestamp
             if item.delay <= 0:
                 self.end.queue.appendleft(self.queue.pop())
 
     def send(self, item: Item):
         packet = Packet(self.timestamp, item)
-        packet.delay = self.bit_delay + (item.size / self.bandwidth)
+
+        lat = latency(self.start.region, self.end.region)
+        trans = (item.size / speed(self.start.region, self.end.region))
+        packet.delay = lat + trans
+
         self.queue.appendleft(packet)

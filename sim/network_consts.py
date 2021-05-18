@@ -13,34 +13,34 @@ def speed(src: Region, dest: Region) -> int:
 
 
 # 2021 - https://testmy.net/country
-SPEED = {
+SPEED = { # MB/s
     Region.US: {
-        'down': 55.3,
-        'up': 19.2,
+        'down': 55.3 / 8,
+        'up': 19.2 / 8,
     },
     Region.EU: {
-        'down': 65.0,
-        'up': 34.0,
+        'down': 65.0 / 8,
+        'up': 34.0 / 8,
     },
     Region.SA: {
-        'down': 23.4,
-        'up': 6.4,
+        'down': 23.4 / 8,
+        'up': 6.4 / 8, # ?!
     },
     Region.AP: {
-        'down': 32.2,
-        'up': 23.5,
+        'down': 32.2 / 8,
+        'up': 23.5 / 8,
     },
     Region.JP: {
-        'down': 47.8,
-        'up': 54.1,
+        'down': 47.8 / 8,
+        'up': 54.1 / 8,
     },
     Region.AU: {
-        'down': 51.2,
-        'up': 16.8,
+        'down': 51.2 / 8,
+        'up': 16.8 / 8,
     },
     Region.RU: {
-        'down': 23.2,
-        'up': 22.1,
+        'down': 23.2 / 8,
+        'up': 22.1 / 8,
     },
 }
 
