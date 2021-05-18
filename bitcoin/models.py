@@ -3,6 +3,7 @@ import sys
 import numpy as np
 
 from typing import Dict
+from enum import Enum
 
 sys.path.append("..")
 
@@ -16,12 +17,22 @@ logger.add(sys.stdout, level='DEBUG')
 logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
+class Region(Enum):
+    US = 'UnitedStates'
+    EU = 'Europe'
+    SA = 'SouthAmerica'
+    AP = 'AsiaPacific'
+    JP = 'Japan'
+    AU = 'Australia'
+    RU = 'Russia'
+
+
 class Block(Item):
     def __init__(self, miner: Node, sender_id: str, timestamp: int, created_at: int, prev_id: str):
         super().__init__(sender_id, 0, created_at)
         self.prev_id = prev_id
         self.miner = miner
-        self.size = np.random.normal(1.19, 0.26) * 10**6
+        self.size = np.random.normal(1.19, 0.26) * 10 ** 6
 
     def __str__(self) -> str:
         return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
@@ -35,7 +46,8 @@ class Transaction(Item):
 
 
 class Miner(Node):
-    def __init__(self, name: str, pos_x: float, pos_y: float, mine_power: int, mine_cost=0, timestamp=0):
+    def __init__(self, name: str, pos_x: float, pos_y: float, mine_power: int, region: Region, mine_cost=0,
+                 timestamp=0):
         super().__init__(pos_x, pos_y, timestamp)
         self.name = name
         self.mine_power = mine_power
@@ -44,6 +56,7 @@ class Miner(Node):
         self.txpool: Dict[str, Transaction] = dict()
         self.heads: List[Block] = []
         self.difficulty = 0
+        self.region = region
         self.stat_block_prop = 0
         self.stat_block_rcvs: Dict[str, int] = dict()
         logger.info(f'CREATED MINER {self.name}')
