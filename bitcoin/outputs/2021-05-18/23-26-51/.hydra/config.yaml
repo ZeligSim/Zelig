@@ -1,0 +1,17 @@
+simulation_iters: 1000
+iter_seconds: 0.1
+block_int_iters: 100
+connections_per_node: 3
+nodes:
+- us:
+    count: 3
+    region: US
+    mine_power: 100
+- europe:
+    count: 3
+    region: EU
+    mine_power: 50
+- asia_pacific:
+    count: 2
+    region: AP
+    mine_power: 25

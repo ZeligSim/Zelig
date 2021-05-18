@@ -4,13 +4,13 @@ from enum import Enum
 
 
 class Region(Enum):
-    US = 'UnitedStates'
-    EU = 'Europe'
-    SA = 'SouthAmerica'
-    AP = 'AsiaPacific'
-    JP = 'Japan'
-    AU = 'Australia'
-    RU = 'Russia'
+    US = 'US'
+    EU = 'EU'
+    SA = 'SA'
+    AP = 'AP'
+    JP = 'JP'
+    AU = 'AU'
+    RU = 'RU'
 
 
 class Coords:

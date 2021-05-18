@@ -1,54 +1,44 @@
 import matplotlib.pyplot as plt
 import pickle
 import random
-import math
-import networkx as nx
+from omegaconf import DictConfig, OmegaConf
+import hydra
 
 from bitcoin.models import Block, Miner
-from sim.base_models import Region, Link
+from sim.base_models import Region
 
-NODE_COUNT = 10
-CONNECTIONS_PER_NODE = 3
 
-SIMULATION_ITERS = 1000
-ITER_SECONDS = 0.1
+@hydra.main(config_name="config")
+def main(cfg: DictConfig):
+    links, nodes = [], []
 
-BLOCK_INT_ITERS = 100  # iterations
+    for elt in cfg.nodes:
+        for idx in range(elt.count):
+            nodes.append(Miner(f'MINER_{elt.region}_{idx}', 0, 0, elt.mine_power, Region(elt.region)))
 
-nodes, links = [], []
+    genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
+    total_mine_power = sum([miner.mine_power for miner in nodes])
+    difficulty = 1 / (cfg.block_int_iters * total_mine_power)
 
-for i in range(NODE_COUNT):
-    nodes.append(Miner(f'MINER_{i}', 0, 0, 100, Region.US))
-
-for node in nodes:
-    for i in range(CONNECTIONS_PER_NODE):
-        n2 = random.choice(nodes[:nodes.index(node)] + nodes[nodes.index(node)+1:])
-        links += node.connect(n2)
-        links += n2.connect(node)
-
-total_mine_power = sum([miner.mine_power for miner in nodes])
-difficulty = 1 / (BLOCK_INT_ITERS * total_mine_power)
-
-genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
-
-for node in nodes:
-    node.difficulty = difficulty
-    node.add_block(genesis_block)
-
-active_links = []
-# one iter corresponds to 0.1 sec
-for time in range(1, SIMULATION_ITERS):
-    active_links.append(sum([len(link.queue) > 0 for link in links]))
     for node in nodes:
-        node.step()
+        node.difficulty = difficulty
+        node.add_block(genesis_block)
+        for i in range(cfg.connections_per_node):
+            n2 = random.choice(nodes[:nodes.index(node)] + nodes[nodes.index(node) + 1:])
+            links += node.connect(n2) + n2.connect(node)
+
+    for time in range(1, cfg.simulation_iters):
+        for node in nodes:
+            node.step()
+
+main()
 
 # LOG / STATS
-for node in nodes:
-    node.log_blockchain()
-    node.log_statistics()
-    with open(f'dumps/{node.name}', 'wb+') as f:
-        pickle.dump(node, f)
-
+# for node in nodes:
+#     # node.log_blockchain()
+#     # node.log_statistics()
+#     with open(f'dumps/{node.name}', 'wb+') as f:
+#         pickle.dump(node, f)
 
 # plt.plot(active_links)
 # plt.axhline(len(links), color='red')
@@ -84,7 +74,3 @@ for node in nodes:
 # nx.draw_networkx_edges(G, nx.get_node_attributes(G, 'pos'),
 #                        connectionstyle="arc3,rad=0.25")
 # plt.show()
-
-
-
-
