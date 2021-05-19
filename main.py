@@ -1,13 +1,18 @@
+import os
 import random
+import sys
+
 from omegaconf import DictConfig, OmegaConf
 import hydra
+import pickle
+from typing import List
 
 from bitcoin.models import Block, Miner
 from sim.util import Region
 
 
 @hydra.main(config_name="config")
-def main(cfg: DictConfig):
+def main(cfg: DictConfig) -> List[Miner]:
     links, nodes = [], []
 
     for elt in cfg.nodes:
@@ -29,15 +34,12 @@ def main(cfg: DictConfig):
         for node in nodes:
             node.step(cfg.iter_seconds)
 
+    for node in nodes:
+        node.log_blockchain()
+        with open(f'../../../dumps/{node.name}', 'wb+') as f:
+            pickle.dump(node, f)
 
 main()
-
-# LOG / STATS
-# for node in nodes:
-#     # node.log_blockchain()
-#     # node.log_statistics()
-#     with open(f'dumps/{node.name}', 'wb+') as f:
-#         pickle.dump(node, f)
 
 # plt.plot(active_links)
 # plt.axhline(len(links), color='red')

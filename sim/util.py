@@ -3,14 +3,18 @@ import math
 from enum import Enum
 
 
+# top 10 countries for April 2020
+# corresponding to > 95% of the global hash power
 class Region(Enum):
     US = 'US'
-    EU = 'EU'
-    SA = 'SA'
-    AP = 'AP'
-    JP = 'JP'
-    AU = 'AU'
     RU = 'RU'
+    KZ = 'KZ'
+    ML = 'ML'
+    CN = 'CN'
+    GE = 'GE'
+    NR = 'NR'
+    VN = 'VN'
+    CH = 'CH'
 
 
 class Coords:

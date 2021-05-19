@@ -77,5 +77,4 @@ class Link:
         trans = (item.size / speed(self.start.region, self.end.region))
         packet.delay = lat + trans
 
-
         self.queue.appendleft(packet)
