@@ -25,6 +25,10 @@ def block_prop_delays(block: Block, nodes: List[Miner]) -> List[int]:
 def block_percentile_delay(block: Block, nodes: List[Miner], percent: float) -> int:
     delays = block_prop_delays(block, nodes)
     nodes_required = math.ceil(percent * len(nodes))
+    delays.sort()
+    result = delays[nodes_required - 1]
+    if result > 2**50: # did not reach that percentage of nodes
+        return None
     return sorted(delays)[nodes_required - 1]
 
 

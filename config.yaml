@@ -1,5 +1,5 @@
 # number of simulation steps
-simulation_iters: 6000000
+simulation_iters: 60000000
 
 # real-time second per iteration
 iter_seconds: 0.1
