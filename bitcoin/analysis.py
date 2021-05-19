@@ -1,6 +1,7 @@
 import pickle
 from typing import List, Dict
 import math
+import os
 
 from models import Miner, Block, Transaction
 
@@ -48,8 +49,9 @@ def avg_block_interval(node: Miner) -> float:
 NODE_COUNT = 10
 
 nodes = []
-for i in range(NODE_COUNT):
-    with open(f'dumps/MINER_{i}', 'rb') as f:
+for filename in os.listdir(os.fsencode('dumps')):
+    filename = filename.decode("utf-8")
+    with open(f'dumps/{filename}', 'rb') as f:
         nodes.append(pickle.load(f))
 
 blocks = get_all_blocks(nodes)
