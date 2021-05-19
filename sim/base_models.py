@@ -1,10 +1,13 @@
 from collections import deque
+from enum import Enum
+
 from loguru import logger
 
 from typing import List
 
 from sim import util
-
+from sim.network_consts import speed, latency
+from sim.util import Region
 
 class Item:
     def __init__(self, sender_id: str, size: int, created_at: int):
@@ -23,18 +26,19 @@ class Packet:
 
 
 class Node:
-    def __init__(self, pos_x: float, pos_y: float, timestamp=0):
+    def __init__(self, pos_x: float, pos_y: float, region, timestamp=0):
         self.id = util.generate_uuid()
         self.timestamp = timestamp
         self.pos = util.Coords(pos_x, pos_y)
         self.queue: deque = deque()
+        self.region = region
         self.ins = []
         self.outs = []
 
-    def step(self):
+    def step(self, seconds: float):
         self.timestamp += 1
         for link in self.outs:
-            link.step()
+            link.step(seconds)
 
     # get items to operate on current time step
     #   assumes can handle infinitely many inputs in one step
@@ -50,25 +54,28 @@ class Node:
 
 
 class Link:
-    def __init__(self, start: Node, end: Node, bandwidth: float):
+    def __init__(self, start: Node, end: Node):
         self.id = util.generate_uuid()
         self.timestamp = start.timestamp
-        self.bandwidth = bandwidth
-        self.bit_delay = 0  # TODO:
         self.start = start
         self.end = end
         self.queue: deque = deque()
 
-    def step(self):
+    def step(self, seconds: float):
         self.timestamp += 1
         if len(self.queue) > 0:
             item = self.queue[-1]
-            item.delay -= 0.1  # TODO: subtract seconds interval
+            item.delay -= seconds
             item.timestamp = self.timestamp
             if item.delay <= 0:
                 self.end.queue.appendleft(self.queue.pop())
 
     def send(self, item: Item):
         packet = Packet(self.timestamp, item)
-        packet.delay = self.bit_delay + (item.size / self.bandwidth)
+
+        lat = latency(self.start.region, self.end.region)
+        trans = (item.size / speed(self.start.region, self.end.region))
+        packet.delay = lat + trans
+
+
         self.queue.appendleft(packet)

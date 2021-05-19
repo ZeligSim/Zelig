@@ -1,0 +1,25 @@
+# number of simulation steps
+simulation_iters: 1000
+
+# real-time second per iteration
+iter_seconds: 0.1
+
+# expected block interval in iters
+block_int_iters: 100
+
+# outgoing connections per node
+connections_per_node: 3
+
+# setup nodes (regions: US EU SA AP JP AU RU)
+nodes:
+  - count: 3
+    region: US
+    mine_power: 100
+
+  - count: 3
+    region: EU
+    mine_power: 50
+
+  - count: 2
+    region: AP
+    mine_power: 25

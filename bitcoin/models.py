@@ -9,10 +9,10 @@ sys.path.append("..")
 from loguru import logger
 
 from sim.base_models import *
-from messages import InvMessage, GetDataMessage
+from bitcoin.messages import InvMessage, GetDataMessage
 
 logger.remove()
-logger.add(sys.stdout, level='DEBUG')
+logger.add(sys.stdout, level='INFO')
 logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
@@ -21,7 +21,7 @@ class Block(Item):
         super().__init__(sender_id, 0, created_at)
         self.prev_id = prev_id
         self.miner = miner
-        self.size = np.random.normal(1.19, 0.26) * 10**6
+        self.size = np.random.normal(1.19, 0.26) * 10 ** 6
 
     def __str__(self) -> str:
         return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
@@ -35,8 +35,9 @@ class Transaction(Item):
 
 
 class Miner(Node):
-    def __init__(self, name: str, pos_x: float, pos_y: float, mine_power: int, mine_cost=0, timestamp=0):
-        super().__init__(pos_x, pos_y, timestamp)
+    def __init__(self, name: str, pos_x: float, pos_y: float, mine_power: int, region: Region, mine_cost=0,
+                 timestamp=0):
+        super().__init__(pos_x, pos_y, region, timestamp)
         self.name = name
         self.mine_power = mine_power
         self.mine_cost = mine_cost
@@ -51,8 +52,8 @@ class Miner(Node):
     def __str__(self) -> str:
         return self.name
 
-    def step(self):
-        super().step()
+    def step(self, seconds: float):
+        super().step(seconds)
         items = self.get_items()
         for item in items:
             self.__consume(item)
@@ -63,11 +64,10 @@ class Miner(Node):
             self.generate_block()
 
     def connect(self, *argv) -> List[Link]:
-        # link = Link(self, node, os.getenv('BANDWIDTH')) #TODO: bandwidth
         links = []
         for node in argv:
             if node not in [link.end for link in self.outs]:
-                link = Link(self, node, 5000000)  # 5 MB/s
+                link = Link(self, node)
                 self.outs.append(link)
                 node.ins.append(link)
                 links.append(link)
