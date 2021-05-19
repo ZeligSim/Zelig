@@ -11,7 +11,7 @@ def get_all_blocks(nodes: List[Miner]) -> Dict[str, Block]:
     blocks = dict()
     for node in nodes:
         for _, block in node.blockchain.items():
-            if block.created_at != 0:
+            if block != 'placeholder' and block.created_at != 0:
                 blocks[block.id] = block
     return blocks
 
