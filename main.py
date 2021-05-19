@@ -1,7 +1,4 @@
-import os
 import random
-import sys
-
 from omegaconf import DictConfig, OmegaConf
 import hydra
 import pickle
@@ -16,8 +13,8 @@ def main(cfg: DictConfig) -> List[Miner]:
     links, nodes = [], []
 
     for elt in cfg.nodes:
-        mine_power = elt.region_mine_power / 1 # FIXME
-        for idx in range(1): # FIXME
+        mine_power = elt.region_mine_power / 1  # FIXME
+        for idx in range(1):  # FIXME
             nodes.append(Miner(f'MINER_{elt.region}_{idx}', 0, 0, mine_power, Region(elt.region)))
 
     genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
@@ -27,8 +24,11 @@ def main(cfg: DictConfig) -> List[Miner]:
     for node in nodes:
         node.difficulty = difficulty
         node.add_block(genesis_block)
+        node_index = nodes.index(node)
+        first_part = nodes[:node_index]
+        second_part = nodes[node_index + 1:]
         for i in range(cfg.connections_per_node):
-            n2 = random.choice(nodes[:nodes.index(node)] + nodes[nodes.index(node) + 1:])
+            n2 = random.choice(first_part + second_part)
             links += node.connect(n2) + n2.connect(node)
 
     for time in range(1, cfg.simulation_iters):
@@ -37,8 +37,9 @@ def main(cfg: DictConfig) -> List[Miner]:
 
     for node in nodes:
         node.log_blockchain()
-        with open(f'../../../dumps/{node.name}', 'wb+') as f:
+        with open(f'../../../dumps/{cfg.sim_name}/{node.name}', 'wb+') as f:
             pickle.dump(node, f)
+
 
 main()
 

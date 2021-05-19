@@ -1,3 +1,6 @@
+# name of simulation run, dumps will be under this folder
+sim_name: one_node_regions_60m
+
 # number of simulation steps
 simulation_iters: 60000000
 

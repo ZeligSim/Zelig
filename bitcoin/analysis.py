@@ -1,7 +1,5 @@
-import pickle
 from typing import List, Dict
 import math
-import os
 
 from models import Miner, Block, Transaction
 
