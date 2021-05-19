@@ -76,7 +76,6 @@ class Miner(Node):
     def __consume(self, item: Item):
         if type(item) == Block:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
-            self.stat_block_prop += self.timestamp - item.created_at
             self.__consume_block(item)
         elif type(item) == Transaction:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
@@ -163,12 +162,14 @@ class Miner(Node):
                 link.send(item)
 
     # get length of chain starting ending at `block`
-    def __get_length(self, block, count=0):
+    def __get_length(self, block):
+        count = 0
         prev = self.blockchain.get(block.prev_id, None)
-        if prev is not None:
-            return self.__get_length(prev, count + 1)
-        else:
-            return count
+        while prev is not None:
+            count += 1
+            prev = self.blockchain.get(prev.prev_id, None)
+        return count
+
 
     # -- LOGGING / INFO METHODS --
     def log_blockchain(self):
