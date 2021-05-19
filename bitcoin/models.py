@@ -45,7 +45,7 @@ class Miner(Node):
         self.txpool: Dict[str, Transaction] = dict()
         self.heads: List[Block] = []
         self.difficulty = 0
-        self.stat_block_prop = 0
+
         self.stat_block_rcvs: Dict[str, int] = dict()
         logger.info(f'CREATED MINER {self.name}')
 
@@ -183,11 +183,3 @@ class Miner(Node):
                 logger.warning(f'\t\t*** {block}')
             else:
                 logger.warning(f'\t\t{block}')
-
-    def log_statistics(self):
-        logger.warning(f'{self.name}')
-        logger.warning(f'\tSTATS:')
-        logger.warning(f'\t\tAverage block prop.:    {self.avg_block_prop()}')
-
-    def avg_block_prop(self):
-        return self.stat_block_prop / (len(self.blockchain))

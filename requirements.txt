@@ -1,6 +1,5 @@
-hydra_core==1.0.6
 loguru==0.5.1
 numpy==1.19.5
-matplotlib==3.4.2
+hydra_core==1.0.6
 omegaconf==2.0.6
 hydra==2.5

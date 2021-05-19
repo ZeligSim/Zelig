@@ -1,5 +1,5 @@
 # number of simulation steps
-simulation_iters: 10000
+simulation_iters: 6000000
 
 # real-time second per iteration
 iter_seconds: 0.1
@@ -8,7 +8,7 @@ iter_seconds: 0.1
 block_int_iters: 6000
 
 # outgoing connections per node
-connections_per_node: 8
+connections_per_node: 3
 
 # setup nodes (regions: CH US RU KZ ML CN GE NR VN)
 #   at most one entry per region

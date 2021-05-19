@@ -16,8 +16,8 @@ def main(cfg: DictConfig) -> List[Miner]:
     links, nodes = [], []
 
     for elt in cfg.nodes:
-        mine_power = elt.region_mine_power / elt.count
-        for idx in range(elt.count):
+        mine_power = elt.region_mine_power / 1 # FIXME
+        for idx in range(1): # FIXME
             nodes.append(Miner(f'MINER_{elt.region}_{idx}', 0, 0, mine_power, Region(elt.region)))
 
     genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
