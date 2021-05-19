@@ -16,8 +16,9 @@ def main(cfg: DictConfig) -> List[Miner]:
     links, nodes = [], []
 
     for elt in cfg.nodes:
+        mine_power = elt.region_mine_power / elt.count
         for idx in range(elt.count):
-            nodes.append(Miner(f'MINER_{elt.region}_{idx}', 0, 0, elt.mine_power, Region(elt.region)))
+            nodes.append(Miner(f'MINER_{elt.region}_{idx}', 0, 0, mine_power, Region(elt.region)))
 
     genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
     total_mine_power = sum([miner.mine_power for miner in nodes])

@@ -1,17 +1,52 @@
 # number of simulation steps
-simulation_iters: 1000
+simulation_iters: 10000
 
 # real-time second per iteration
 iter_seconds: 0.1
 
 # expected block interval in iters
-block_int_iters: 100
+block_int_iters: 6000
 
 # outgoing connections per node
-connections_per_node: 3
+connections_per_node: 8
 
-# setup nodes (regions: US EU SA AP JP AU RU)
+# setup nodes (regions: CH US RU KZ ML CN GE NR VN)
+#   at most one entry per region
+# miner powers are represented as that region's percent share in global power
 nodes:
-  - count: 8
+  - count: 189
+    region: CH
+    region_mine_power: 70.74
+
+  - count: 1892
     region: US
-    mine_power: 100
+    region_mine_power: 7.87
+
+  - count: 251
+    region: RU
+    region_mine_power: 7.5
+
+  - count: 5
+    region: KZ
+    region_mine_power: 6.71
+
+  - count: 19
+    region: ML
+    region_mine_power: 4.71
+
+  - count: 316
+    region: CN
+    region_mine_power: 0.89
+
+  - count: 1769
+    region: GE
+    region_mine_power: 0.61
+
+  - count: 32
+    region: NR
+    region_mine_power: 0.52
+
+  - count: 2
+    region: VN
+    region_mine_power: 0.46
+
