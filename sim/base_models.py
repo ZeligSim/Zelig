@@ -66,8 +66,8 @@ class Link:
         if len(self.queue) > 0:
             item = self.queue[-1]
             item.delay -= seconds
-            item.timestamp = self.timestamp
             if item.delay <= 0:
+                item.timestamp = self.timestamp
                 self.end.queue.appendleft(self.queue.pop())
 
     def send(self, item: Item):

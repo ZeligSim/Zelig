@@ -77,9 +77,9 @@ class Miner(Node):
         if type(item) == Block:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
             self.__consume_block(item)
-        elif type(item) == Transaction:
-            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
-            self.__consume_transaction(item)
+        # elif type(item) == Transaction:
+        #     logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
+        #     self.__consume_transaction(item)
         elif type(item) == InvMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR {item.type} {item.item_id}')
             self.__consume_inv(item)
@@ -104,18 +104,18 @@ class Miner(Node):
                 self.blockchain[msg.item_id] = 'placeholder'  # not none
                 getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
                 self.__send_to(msg.sender_id, getdata)
-        elif msg.type == 'tx':
-            if self.txpool.get(msg.item_id, None) is None:
-                logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-                self.txpool[msg.item_id] = 'placeholder'  # not none
-                getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
-                self.__send_to(msg.sender_id, getdata)
+        # elif msg.type == 'tx':
+        #     if self.txpool.get(msg.item_id, None) is None:
+        #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+        #         self.txpool[msg.item_id] = 'placeholder'  # not none
+        #         getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
+        #         self.__send_to(msg.sender_id, getdata)
 
     def __consume_getdata(self, msg: GetDataMessage):
         if msg.type == 'block':
             self.__send_to(msg.sender_id, self.blockchain[msg.item_id])
-        elif msg.type == 'tx':
-            self.__send_to(msg.sender_id, self.txpool[msg.item_id])
+        # elif msg.type == 'tx':
+        #     self.__send_to(msg.sender_id, self.txpool[msg.item_id])
 
     # ------------------------------
 
@@ -160,6 +160,7 @@ class Miner(Node):
         for link in self.outs:
             if link.end.id == node_id:
                 link.send(item)
+                return
 
     # get length of chain starting ending at `block`
     def __get_length(self, block):
