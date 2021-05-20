@@ -3,6 +3,7 @@ from omegaconf import DictConfig, OmegaConf
 import hydra
 import pickle
 from typing import List
+from pathlib import Path
 
 from bitcoin.models import Block, Miner
 from sim.util import Region
@@ -35,6 +36,7 @@ def main(cfg: DictConfig) -> List[Miner]:
         for node in nodes:
             node.step(cfg.iter_seconds)
 
+    Path(f'../../../dumps/{cfg.sim_name}').mkdir(parents=True, exist_ok=True)
     for node in nodes:
         node.log_blockchain()
         with open(f'../../../dumps/{cfg.sim_name}/{node.name}', 'wb+') as f:
