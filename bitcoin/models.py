@@ -122,7 +122,7 @@ class Miner(Node):
     # FIXME: public for testing
     def generate_block(self, prev=None) -> Block:
         if prev is None:
-            prev = self.__choose_prev_block()
+            prev = self.choose_prev_block()
         block = Block(self, self.id, self.timestamp, self.timestamp, prev.id)
         logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         self.add_block(block)
@@ -152,7 +152,7 @@ class Miner(Node):
             link.send(msg)
 
     # returns the head of the longest chain
-    def __choose_prev_block(self) -> Block:
+    def choose_prev_block(self) -> Block:
         lengths = [self.__get_length(block) for block in self.heads if block != 'placeholder']
         return self.heads[lengths.index(max(lengths))]
 
@@ -174,7 +174,7 @@ class Miner(Node):
 
     # -- LOGGING / INFO METHODS --
     def log_blockchain(self):
-        head = self.__choose_prev_block()
+        head = self.choose_prev_block()
         logger.warning(f'{self.name}')
         logger.warning(f'\tBLOCKCHAIN:')
         for block in self.blockchain.values():

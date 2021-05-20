@@ -37,7 +37,7 @@ def stale_block_rate(node: Miner) -> float:
 
 def avg_block_interval(node: Miner) -> float:
     total, count = 0, 1
-    head = node.__choose_prev_block()
+    head = node.choose_prev_block()
     while True:
         block = node.blockchain.get(head.prev_id, None)
         if block is None:
