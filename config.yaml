@@ -1,17 +1,17 @@
 # name of simulation run, dumps will be under this folder
-sim_name: two_node_regions_30m
+sim_name: performance_tests
 
 # number of simulation steps
-simulation_iters: 30000000
+simulation_iters: 10000
 
 # real-time second per iteration
 iter_seconds: 0.1
 
 # expected block interval in iters
-block_int_iters: 6000
+block_int_iters: 1000
 
 # outgoing connections per node
-connections_per_node: 4
+connections_per_node: 3
 
 # setup nodes (regions: CH US RU KZ ML CN GE NR VN)
 #   at most one entry per region

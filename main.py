@@ -4,6 +4,8 @@ import hydra
 import pickle
 from typing import List
 from pathlib import Path
+import time
+import matplotlib.pyplot as plt
 
 from bitcoin.models import Block, Miner
 from sim.util import Region
@@ -11,13 +13,17 @@ from sim.util import Region
 
 @hydra.main(config_name="config")
 def main(cfg: DictConfig) -> List[Miner]:
+    # TIMER metrics
+    iter_times = []
+
     links, nodes = [], []
 
+    setup_start = time.time()
     for elt in cfg.nodes:
-        nodes_in_region = 2
+        nodes_in_region = 1
         # nodes_in_region = elt.count
-        mine_power = elt.region_mine_power / nodes_in_region # FIXME
-        for idx in range(nodes_in_region): # FIXME
+        mine_power = elt.region_mine_power / nodes_in_region  # FIXME
+        for idx in range(nodes_in_region):  # FIXME
             nodes.append(Miner(f'MINER_{elt.region}_{idx}', 0, 0, mine_power, Region(elt.region)))
 
     genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
@@ -33,16 +39,34 @@ def main(cfg: DictConfig) -> List[Miner]:
         for i in range(cfg.connections_per_node):
             n2 = random.choice(first_part + second_part)
             links += node.connect(n2) + n2.connect(node)
+    setup_end = time.time()
+    setup_time = setup_end - setup_start
 
+    sim_start = time.time()
     for i in range(1, cfg.simulation_iters):
+        iter_start = time.time()
         for node in nodes:
             node.step(cfg.iter_seconds)
+        iter_end = time.time()
+        iter_times.append(iter_end - iter_start)
+    sim_end = time.time()
+    total_sim_time = sim_end - sim_start
 
     Path(f'../../../dumps/{cfg.sim_name}').mkdir(parents=True, exist_ok=True)
     for node in nodes:
         node.log_blockchain()
         with open(f'../../../dumps/{cfg.sim_name}/{node.name}', 'wb+') as f:
             pickle.dump(node, f)
+
+    print(f'Times (seconds):')
+    print(f'\tSetup time: {round(setup_time, 5)}')
+    print(f'\tTotal sim time: {round(total_sim_time, 5)}')
+    print(f'\tAvg per iter: {round(sum(iter_times) / len(iter_times), 5)}')
+    print(f'\tAvg per node: {round(sum(iter_times) / (len(iter_times) * len(nodes)), 7)}')
+    plt.bar(range(len(iter_times)), iter_times)
+    plt.xlabel('Iteration')
+    plt.ylabel('Time per iteration')
+    plt.show()
 
 
 main()
