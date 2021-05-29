@@ -1,5 +1,12 @@
 from sim.util import Region
 
+
+def get_delay(a: Region, b: Region, size: int) -> int:
+    lat = latency(a, b)
+    trans = (size / speed(a, b))
+    return lat + trans
+
+
 def latency(a: Region, b: Region) -> int:
     latency = LATENCY.get((a, b), None)
     if latency is None:
@@ -12,10 +19,10 @@ def speed(src: Region, dest: Region) -> int:
 
 
 # 2021 - https://testmy.net/country
-SPEED = { # Mbps => MB/s
+SPEED = {  # Mbps => MB/s
     Region.CH: {
-        'down': 31.6 * (10**6 / 8),
-        'up': 23.6 * (10**6 / 8),
+        'down': 31.6 * (10 ** 6 / 8),
+        'up': 23.6 * (10 ** 6 / 8),
     },
     Region.US: {
         'down': 55.3 * (10 ** 6 / 8),

@@ -6,7 +6,7 @@ from loguru import logger
 from typing import List
 
 from sim import util
-from sim.network_consts import speed, latency
+from sim.network_util import speed, latency
 from sim.util import Region
 
 
@@ -18,12 +18,11 @@ class Item:
         self.sender_id = sender_id
 
 
-# Wrapper class for items to prevent Links from modifying items pointed from multiple places
+# Wrapper class for items to prevent Nodes from modifying items pointed from multiple places
 class Packet:
     def __init__(self, timestamp: int, payload: Item):
         self.timestamp = timestamp
         self.payload = payload
-        # self.delay = 0
         self.reveal_at = 0
 
 
@@ -33,46 +32,14 @@ class Node:
         self.timestamp = timestamp
         self.pos = util.Coords(pos_x, pos_y)
         self.region = region
-        self.queue: List[Packet] = []
+        # self.queue: List[Packet] = []
+        self.inbox = dict()
         self.ins = dict()
         self.outs = dict()
 
-    def step(self, seconds: float):
+    def step(self, seconds: float) -> List[Item]:
         self.timestamp += 1
-        # outs = self.outs.values()
-        # for link in outs:
-        #     link.step(seconds)
-
-    # get items to operate on current time step
-    #   assumes can handle infinitely many inputs in one step
-    def get_items(self) -> List[Item]:
-        return [packet.payload for packet in self.queue if packet.reveal_at == self.timestamp]
-
-
-# class Link:
-#     def __init__(self, start: Node, end: Node):
-#         self.id = util.generate_uuid()
-#         self.timestamp = start.timestamp
-#         self.start = start
-#         self.end = end
-#         self.queue: deque = deque()
-#
-#     def step(self, seconds: float):
-#         self.timestamp += 1
-#         try:
-#             item = self.queue[-1]
-#             item.delay -= seconds
-#             if item.delay <= 0:
-#                 item.timestamp = self.timestamp
-#                 self.end.queue.appendleft(self.queue.pop())
-#         except IndexError:
-#             return
-#
-#     def send(self, item: Item):
-#         packet = Packet(self.timestamp, item)
-#
-#         lat = latency(self.start.region, self.end.region)
-#         trans = (item.size / speed(self.start.region, self.end.region))
-#         packet.delay = lat + trans
-#
-#         self.queue.appendleft(packet)
+        try:
+            return [packet.payload for packet in self.inbox.pop(self.timestamp)]
+        except KeyError:
+            return []

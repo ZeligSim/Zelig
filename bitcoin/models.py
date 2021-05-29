@@ -11,7 +11,7 @@ from loguru import logger
 
 from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
-from sim.network_consts import speed, latency
+from sim.network_util import get_delay
 
 logger.remove()
 logger.add(sys.stdout, level='INFO')
@@ -55,8 +55,7 @@ class Miner(Node):
         return self.name
 
     def step(self, seconds: float):
-        super().step(seconds)
-        items = self.get_items()
+        items = super().step(seconds)
         for item in items:
             self.__consume(item)
 
@@ -134,11 +133,13 @@ class Miner(Node):
             self.__send_to(node, msg)
 
     def __send_to(self, node: Node, item: Item):
-        lat = latency(self.region, node.region)  # TODO: abstract away
-        trans = (item.size / speed(self.region, node.region))
         packet = Packet(self.timestamp, item)
-        packet.reveal_at = math.ceil(self.timestamp + (lat + trans) / 0.1)
-        node.queue.append(packet)
+        delay = get_delay(self.region, node.region, item.size) / 0.1
+        packet.reveal_at = math.ceil(delay)
+        try:
+            node.inbox[packet.reveal_at].append(packet)
+        except KeyError:
+            node.inbox[packet.reveal_at] = [packet]
 
     # returns the head of the longest chain
     def choose_prev_block(self) -> Block:

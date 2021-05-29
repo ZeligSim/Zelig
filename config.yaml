@@ -8,7 +8,7 @@ simulation_iters: 10000
 iter_seconds: 0.1
 
 # expected block interval in iters
-block_int_iters: 6000
+block_int_iters: 500
 
 # outgoing connections per node
 connections_per_node: 3
