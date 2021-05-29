@@ -12,7 +12,7 @@ from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
 
 logger.remove()
-logger.add(sys.stdout, level='INFO')
+# logger.add(sys.stdout, level='INFO')
 # logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 

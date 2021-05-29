@@ -68,12 +68,14 @@ class Link:
 
     def step(self, seconds: float):
         self.timestamp += 1
-        if len(self.queue) > 0:
+        try:
             item = self.queue[-1]
             item.delay -= seconds
             if item.delay <= 0:
                 item.timestamp = self.timestamp
                 self.end.queue.appendleft(self.queue.pop())
+        except IndexError:
+            return
 
     def send(self, item: Item):
         packet = Packet(self.timestamp, item)
