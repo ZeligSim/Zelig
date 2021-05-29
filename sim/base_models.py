@@ -23,7 +23,8 @@ class Packet:
     def __init__(self, timestamp: int, payload: Item):
         self.timestamp = timestamp
         self.payload = payload
-        self.delay = 0
+        # self.delay = 0
+        self.reveal_at = 0
 
 
 class Node:
@@ -31,57 +32,47 @@ class Node:
         self.id = util.generate_uuid()
         self.timestamp = timestamp
         self.pos = util.Coords(pos_x, pos_y)
-        self.queue: deque = deque()
         self.region = region
+        self.queue: List[Packet] = []
         self.ins = dict()
         self.outs = dict()
 
     def step(self, seconds: float):
         self.timestamp += 1
-        outs = self.outs.values()
-        for link in outs:
-            link.step(seconds)
+        # outs = self.outs.values()
+        # for link in outs:
+        #     link.step(seconds)
 
     # get items to operate on current time step
     #   assumes can handle infinitely many inputs in one step
     def get_items(self) -> List[Item]:
-        items = []
-        timestamp = self.timestamp
-        queue = self.queue
-        try:
-            packet = queue[-1]
-            while packet.timestamp < timestamp:
-                items.append(queue.pop().payload)
-                packet = queue[-1]
-        except IndexError:
-            pass
-        return items
+        return [packet.payload for packet in self.queue if packet.reveal_at == self.timestamp]
 
 
-class Link:
-    def __init__(self, start: Node, end: Node):
-        self.id = util.generate_uuid()
-        self.timestamp = start.timestamp
-        self.start = start
-        self.end = end
-        self.queue: deque = deque()
-
-    def step(self, seconds: float):
-        self.timestamp += 1
-        try:
-            item = self.queue[-1]
-            item.delay -= seconds
-            if item.delay <= 0:
-                item.timestamp = self.timestamp
-                self.end.queue.appendleft(self.queue.pop())
-        except IndexError:
-            return
-
-    def send(self, item: Item):
-        packet = Packet(self.timestamp, item)
-
-        lat = latency(self.start.region, self.end.region)
-        trans = (item.size / speed(self.start.region, self.end.region))
-        packet.delay = lat + trans
-
-        self.queue.appendleft(packet)
+# class Link:
+#     def __init__(self, start: Node, end: Node):
+#         self.id = util.generate_uuid()
+#         self.timestamp = start.timestamp
+#         self.start = start
+#         self.end = end
+#         self.queue: deque = deque()
+#
+#     def step(self, seconds: float):
+#         self.timestamp += 1
+#         try:
+#             item = self.queue[-1]
+#             item.delay -= seconds
+#             if item.delay <= 0:
+#                 item.timestamp = self.timestamp
+#                 self.end.queue.appendleft(self.queue.pop())
+#         except IndexError:
+#             return
+#
+#     def send(self, item: Item):
+#         packet = Packet(self.timestamp, item)
+#
+#         lat = latency(self.start.region, self.end.region)
+#         trans = (item.size / speed(self.start.region, self.end.region))
+#         packet.delay = lat + trans
+#
+#         self.queue.appendleft(packet)

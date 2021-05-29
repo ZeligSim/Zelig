@@ -1,3 +1,4 @@
+import math
 import random
 import sys
 import numpy as np
@@ -10,9 +11,10 @@ from loguru import logger
 
 from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
+from sim.network_consts import speed, latency
 
 logger.remove()
-# logger.add(sys.stdout, level='INFO')
+logger.add(sys.stdout, level='INFO')
 # logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
@@ -63,11 +65,10 @@ class Miner(Node):
         if random.random() <= self.mine_power * self.difficulty:
             self.generate_block()
 
-    def connect(self, *argv) -> List[Link]:
+    def connect(self, *argv):
         for node in argv:
-            link = Link(self, node)
-            self.outs[node.id] = link
-            node.ins[self.id] = link
+            self.outs[node.id] = node
+            node.ins[self.id] = self
 
     def __consume(self, item: Item):
         if type(item) == Block:
@@ -85,7 +86,7 @@ class Miner(Node):
                 if self.blockchain.get(item.item_id, None) is None:
                     logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
                     self.blockchain[item.item_id] = 'placeholder'  # not none
-                    self.outs[item.sender_id].send(GetDataMessage(item.item_id, item.type, self.id, self.timestamp, 10, self.timestamp))
+                    self.__send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id, self.timestamp, 10, self.timestamp))
             # elif msg.type == 'tx':
             #     if self.txpool.get(msg.item_id, None) is None:
             #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
@@ -95,7 +96,7 @@ class Miner(Node):
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
-                self.outs[item.sender_id].send(self.blockchain[item.item_id])
+                self.__send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
             # elif msg.type == 'tx':
             #     self.__send_to(msg.sender_id, self.txpool[msg.item_id])
 
@@ -128,7 +129,16 @@ class Miner(Node):
         return tx
 
     def __publish_item(self, item: Item, item_type: str):
-        [link.send(InvMessage(item.id, item_type, self.id, self.timestamp, 10, self.timestamp)) for link in self.outs.values()]
+        msg = InvMessage(item.id, item_type, self.id, self.timestamp, 10, self.timestamp)
+        for node in self.outs.values():
+            self.__send_to(node, msg)
+
+    def __send_to(self, node: Node, item: Item):
+        lat = latency(self.region, node.region)  # TODO: abstract away
+        trans = (item.size / speed(self.region, node.region))
+        packet = Packet(self.timestamp, item)
+        packet.reveal_at = math.ceil(self.timestamp + (lat + trans) / 0.1)
+        node.queue.append(packet)
 
     # returns the head of the longest chain
     def choose_prev_block(self) -> Block:

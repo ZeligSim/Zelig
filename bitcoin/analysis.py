@@ -46,19 +46,3 @@ def avg_block_interval(node: Miner) -> float:
         total += head.created_at - block.created_at
         head = block
     return total / count
-
-
-# NODE_COUNT = 10
-#
-# nodes = []
-# for filename in os.listdir(os.fsencode('dumps')):
-#     filename = filename.decode("utf-8")
-#     with open(f'dumps/{filename}', 'rb') as f:
-#         nodes.append(pickle.load(f))
-#
-# blocks = get_all_blocks(nodes)
-#
-# for id, block in blocks.items():
-#     print(id)
-#     for percent in [0.1, 0.25, 0.5, 0.75, 1]:
-#         print(percent, '\t', block_percentile_delay(block, nodes, percent))
