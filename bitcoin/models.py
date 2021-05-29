@@ -135,7 +135,7 @@ class Miner(Node):
     def __send_to(self, node: Node, item: Item):
         packet = Packet(self.timestamp, item)
         delay = get_delay(self.region, node.region, item.size) / 0.1
-        packet.reveal_at = math.ceil(delay)
+        packet.reveal_at = math.ceil(self.timestamp + delay)
         try:
             node.inbox[packet.reveal_at].append(packet)
         except KeyError:

@@ -8,10 +8,10 @@ def get_delay(a: Region, b: Region, size: int) -> int:
 
 
 def latency(a: Region, b: Region) -> int:
-    latency = LATENCY.get((a, b), None)
-    if latency is None:
+    lat = LATENCY.get((a, b), None)
+    if lat is None:
         return LATENCY[(b, a)]
-    return latency
+    return lat
 
 
 def speed(src: Region, dest: Region) -> int:
