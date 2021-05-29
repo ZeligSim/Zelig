@@ -9,6 +9,7 @@ from sim import util
 from sim.network_consts import speed, latency
 from sim.util import Region
 
+
 class Item:
     def __init__(self, sender_id: str, size: int, created_at: int):
         self.id = util.generate_uuid()
@@ -32,25 +33,29 @@ class Node:
         self.pos = util.Coords(pos_x, pos_y)
         self.queue: deque = deque()
         self.region = region
-        self.ins = []
-        self.outs = []
+        self.ins = dict()
+        self.outs = dict()
 
     def step(self, seconds: float):
         self.timestamp += 1
-        for link in self.outs:
+        outs = self.outs.values()
+        for link in outs:
             link.step(seconds)
 
     # get items to operate on current time step
     #   assumes can handle infinitely many inputs in one step
     def get_items(self) -> List[Item]:
-        if len(self.queue) > 0:
-            packet = self.queue[-1]
-            if packet.timestamp < self.timestamp:
-                return [self.queue.pop().payload] + self.get_items()
-            else:
-                return []
-        else:
-            return []
+        items = []
+        timestamp = self.timestamp
+        queue = self.queue
+        try:
+            packet = queue[-1]
+            while packet.timestamp < timestamp:
+                items.append(queue.pop().payload)
+                packet = queue[-1]
+        except IndexError:
+            pass
+        return items
 
 
 class Link:

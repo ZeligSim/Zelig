@@ -13,7 +13,7 @@ from bitcoin.messages import InvMessage, GetDataMessage
 
 logger.remove()
 logger.add(sys.stdout, level='INFO')
-logger.add('logs/bitcoin_logs.txt', level='DEBUG')
+# logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
 class Block(Item):
@@ -21,7 +21,7 @@ class Block(Item):
         super().__init__(sender_id, 0, created_at)
         self.prev_id = prev_id
         self.miner = miner
-        self.size = np.random.normal(1.19, 0.26) * 10 ** 6
+        self.size = np.random.normal(1.19, 0.26) * (10 ** 6)
 
     def __str__(self) -> str:
         return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
@@ -64,14 +64,10 @@ class Miner(Node):
             self.generate_block()
 
     def connect(self, *argv) -> List[Link]:
-        links = []
         for node in argv:
-            if node not in [link.end for link in self.outs]:
-                link = Link(self, node)
-                self.outs.append(link)
-                node.ins.append(link)
-                links.append(link)
-        return links
+            link = Link(self, node)
+            self.outs[node.id] = link
+            node.ins[self.id] = link
 
     def __consume(self, item: Item):
         if type(item) == Block:
@@ -89,8 +85,7 @@ class Miner(Node):
                 if self.blockchain.get(item.item_id, None) is None:
                     logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
                     self.blockchain[item.item_id] = 'placeholder'  # not none
-                    getdata = GetDataMessage(item.item_id, item.type, self.id, self.timestamp, 10, self.timestamp)
-                    self.__send_to(item.sender_id, getdata)
+                    self.outs[item.sender_id].send(GetDataMessage(item.item_id, item.type, self.id, self.timestamp, 10, self.timestamp))
             # elif msg.type == 'tx':
             #     if self.txpool.get(msg.item_id, None) is None:
             #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
@@ -100,7 +95,7 @@ class Miner(Node):
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
-                self.__send_to(item.sender_id, self.blockchain[item.item_id])
+                self.outs[item.sender_id].send(self.blockchain[item.item_id])
             # elif msg.type == 'tx':
             #     self.__send_to(msg.sender_id, self.txpool[msg.item_id])
 
@@ -119,9 +114,10 @@ class Miner(Node):
     # remove block.prev from heads if exists and add block to blockchain
     def add_block(self, block):
         self.blockchain[block.id] = block
-        prev = list(filter(lambda head: head.id == block.prev_id, self.heads))
-        if len(prev) > 0:
-            self.heads.remove(prev[0])
+        try:
+            self.heads.remove(self.blockchain[block.prev_id])
+        except (ValueError, KeyError):
+            pass
         self.heads.append(block)
 
     def __generate_transaction(self) -> Transaction:
@@ -132,20 +128,13 @@ class Miner(Node):
         return tx
 
     def __publish_item(self, item: Item, item_type: str):
-        for link in self.outs:
-            msg = InvMessage(item.id, item_type, self.id, self.timestamp, 10, self.timestamp)
-            link.send(msg)
+        [link.send(InvMessage(item.id, item_type, self.id, self.timestamp, 10, self.timestamp)) for link in self.outs.values()]
 
     # returns the head of the longest chain
     def choose_prev_block(self) -> Block:
-        lengths = [self.__get_length(block) for block in self.heads if block != 'placeholder']
+        get_length = self.__get_length
+        lengths = [get_length(block) for block in self.heads if block != 'placeholder']
         return self.heads[lengths.index(max(lengths))]
-
-    def __send_to(self, node_id: str, item: Item):
-        for link in self.outs:
-            if link.end.id == node_id:
-                link.send(item)
-                return
 
     # get length of chain starting ending at `block`
     def __get_length(self, block):
@@ -155,7 +144,6 @@ class Miner(Node):
             count += 1
             prev = self.blockchain.get(prev.prev_id, None)
         return count
-
 
     # -- LOGGING / INFO METHODS --
     def log_blockchain(self):

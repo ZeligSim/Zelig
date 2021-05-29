@@ -22,8 +22,8 @@ def main(cfg: DictConfig) -> List[Miner]:
     for elt in cfg.nodes:
         nodes_in_region = 1
         # nodes_in_region = elt.count
-        mine_power = elt.region_mine_power / nodes_in_region  # FIXME
-        for idx in range(nodes_in_region):  # FIXME
+        mine_power = elt.region_mine_power / nodes_in_region
+        for idx in range(nodes_in_region):
             nodes.append(Miner(f'MINER_{elt.region}_{idx}', 0, 0, mine_power, Region(elt.region)))
 
     genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
@@ -38,7 +38,8 @@ def main(cfg: DictConfig) -> List[Miner]:
         second_part = nodes[node_index + 1:]
         for i in range(cfg.connections_per_node):
             n2 = random.choice(first_part + second_part)
-            links += node.connect(n2) + n2.connect(node)
+            node.connect(n2)
+            n2.connect(node)
     setup_end = time.time()
     setup_time = setup_end - setup_start
 
@@ -64,10 +65,11 @@ def main(cfg: DictConfig) -> List[Miner]:
     print(f'\tTotal sim time: {total_sim_time:.7f}')
     print(f'\tAvg per iter: {(sum(iter_times) / len(iter_times)):.7f}')
     print(f'\tAvg per node: {(sum(iter_times) / (len(iter_times) * len(nodes))):.7f}')
-    plt.bar(range(len(iter_times)), iter_times)
-    plt.xlabel('Iteration')
-    plt.ylabel('Time per iteration')
-    plt.show()
+    if False:
+        plt.bar(range(len(iter_times)), iter_times)
+        plt.xlabel('Iteration')
+        plt.ylabel('Time per iteration')
+        plt.show()
 
 
 main()
