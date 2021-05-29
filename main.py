@@ -14,8 +14,10 @@ def main(cfg: DictConfig) -> List[Miner]:
     links, nodes = [], []
 
     for elt in cfg.nodes:
-        mine_power = elt.region_mine_power / 2 # FIXME
-        for idx in range(2): # FIXME
+        nodes_in_region = 2
+        # nodes_in_region = elt.count
+        mine_power = elt.region_mine_power / nodes_in_region # FIXME
+        for idx in range(nodes_in_region): # FIXME
             nodes.append(Miner(f'MINER_{elt.region}_{idx}', 0, 0, mine_power, Region(elt.region)))
 
     genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
@@ -32,7 +34,7 @@ def main(cfg: DictConfig) -> List[Miner]:
             n2 = random.choice(first_part + second_part)
             links += node.connect(n2) + n2.connect(node)
 
-    for time in range(1, cfg.simulation_iters):
+    for i in range(1, cfg.simulation_iters):
         for node in nodes:
             node.step(cfg.iter_seconds)
 
