@@ -43,10 +43,11 @@ def main(cfg: DictConfig) -> List[Miner]:
     setup_time = setup_end - setup_start
 
     sim_start = time.time()
-    for i in range(1, cfg.simulation_iters):
+    simulation_iters = cfg.simulation_iters
+    iter_seconds = cfg.iter_seconds
+    for i in range(1, simulation_iters):
         iter_start = time.time()
-        for node in nodes:
-            node.step(cfg.iter_seconds)
+        [node.step(iter_seconds) for node in nodes]
         iter_end = time.time()
         iter_times.append(iter_end - iter_start)
     sim_end = time.time()
@@ -59,10 +60,10 @@ def main(cfg: DictConfig) -> List[Miner]:
             pickle.dump(node, f)
 
     print(f'Times (seconds):')
-    print(f'\tSetup time: {round(setup_time, 5)}')
-    print(f'\tTotal sim time: {round(total_sim_time, 5)}')
-    print(f'\tAvg per iter: {round(sum(iter_times) / len(iter_times), 5)}')
-    print(f'\tAvg per node: {round(sum(iter_times) / (len(iter_times) * len(nodes)), 7)}')
+    print(f'\tSetup time: {setup_time:.7f}')
+    print(f'\tTotal sim time: {total_sim_time:.7f}')
+    print(f'\tAvg per iter: {(sum(iter_times) / len(iter_times)):.7f}')
+    print(f'\tAvg per node: {(sum(iter_times) / (len(iter_times) * len(nodes))):.7f}')
     plt.bar(range(len(iter_times)), iter_times)
     plt.xlabel('Iteration')
     plt.ylabel('Time per iteration')

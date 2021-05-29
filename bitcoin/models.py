@@ -76,48 +76,33 @@ class Miner(Node):
     def __consume(self, item: Item):
         if type(item) == Block:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
-            self.__consume_block(item)
-        # elif type(item) == Transaction:
-        #     logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
-        #     self.__consume_transaction(item)
+            self.stat_block_rcvs[item.id] = self.timestamp
+            self.add_block(item)
+            self.__publish_item(item, 'block')
+        elif type(item) == Transaction:
+            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
+            self.txpool[item.id] = item
+            self.__publish_item(item, 'tx')
         elif type(item) == InvMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR {item.type} {item.item_id}')
-            self.__consume_inv(item)
+            if item.type == 'block':
+                if self.blockchain.get(item.item_id, None) is None:
+                    logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+                    self.blockchain[item.item_id] = 'placeholder'  # not none
+                    getdata = GetDataMessage(item.item_id, item.type, self.id, self.timestamp, 10, self.timestamp)
+                    self.__send_to(item.sender_id, getdata)
+            # elif msg.type == 'tx':
+            #     if self.txpool.get(msg.item_id, None) is None:
+            #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+            #         self.txpool[msg.item_id] = 'placeholder'  # not none
+            #         getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
+            #         self.__send_to(msg.sender_id, getdata)
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
-            self.__consume_getdata(item)
-
-    # -- CONSUMING MESSAGE TYPES --
-    def __consume_block(self, block: Block):
-        self.stat_block_rcvs[block.id] = self.timestamp
-        self.add_block(block)
-        self.__publish_item(block, 'block')
-
-    def __consume_transaction(self, tx: Transaction):
-        self.txpool[tx.id] = tx
-        self.__publish_item(tx, 'tx')
-
-    def __consume_inv(self, msg: InvMessage):
-        if msg.type == 'block':
-            if self.blockchain.get(msg.item_id, None) is None:
-                logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-                self.blockchain[msg.item_id] = 'placeholder'  # not none
-                getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
-                self.__send_to(msg.sender_id, getdata)
-        # elif msg.type == 'tx':
-        #     if self.txpool.get(msg.item_id, None) is None:
-        #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-        #         self.txpool[msg.item_id] = 'placeholder'  # not none
-        #         getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
-        #         self.__send_to(msg.sender_id, getdata)
-
-    def __consume_getdata(self, msg: GetDataMessage):
-        if msg.type == 'block':
-            self.__send_to(msg.sender_id, self.blockchain[msg.item_id])
-        # elif msg.type == 'tx':
-        #     self.__send_to(msg.sender_id, self.txpool[msg.item_id])
-
-    # ------------------------------
+            if item.type == 'block':
+                self.__send_to(item.sender_id, self.blockchain[item.item_id])
+            # elif msg.type == 'tx':
+            #     self.__send_to(msg.sender_id, self.txpool[msg.item_id])
 
     # FIXME: public for testing
     def generate_block(self, prev=None) -> Block:
