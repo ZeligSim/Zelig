@@ -2,13 +2,13 @@
 sim_name: performance_tests
 
 # number of simulation steps
-simulation_iters: 10000
+simulation_iters: 20000
 
 # real-time second per iteration
 iter_seconds: 0.1
 
 # expected block interval in iters
-block_int_iters: 500
+block_int_iters: 6000
 
 # outgoing connections per node
 connections_per_node: 3

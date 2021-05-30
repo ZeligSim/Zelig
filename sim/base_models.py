@@ -32,7 +32,6 @@ class Node:
         self.timestamp = timestamp
         self.pos = util.Coords(pos_x, pos_y)
         self.region = region
-        # self.queue: List[Packet] = []
         self.inbox = dict()
         self.ins = dict()
         self.outs = dict()

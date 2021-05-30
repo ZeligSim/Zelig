@@ -34,7 +34,7 @@ def main(cfg: DictConfig) -> List[Miner]:
 
     connections_per_node = cfg.connections_per_node
     for node in nodes:
-        node.difficulty = difficulty
+        node.set_difficulty(difficulty)
         node.add_block(genesis_block)
         node_index = nodes.index(node)
         first_part = nodes[:node_index]

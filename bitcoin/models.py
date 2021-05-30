@@ -41,12 +41,14 @@ class Miner(Node):
                  timestamp=0):
         super().__init__(pos_x, pos_y, region, timestamp)
         self.name = name
-        self.mine_power = mine_power
-        self.mine_cost = mine_cost
         self.blockchain: Dict[str, Block] = dict()
         self.txpool: Dict[str, Transaction] = dict()
         self.heads: List[Block] = []
+
+        self.mine_power = mine_power
+        self.mine_cost = mine_cost
         self.difficulty = 0
+        self.mine_probability = 0
 
         self.stat_block_rcvs: Dict[str, int] = dict()
         logger.info(f'CREATED MINER {self.name}')
@@ -61,13 +63,17 @@ class Miner(Node):
 
         # if random.random() <= 0.001:
         #     self.__generate_transaction()
-        if random.random() <= self.mine_power * self.difficulty:
+        if random.random() <= self.mine_probability:
             self.generate_block()
 
     def connect(self, *argv):
         for node in argv:
             self.outs[node.id] = node
             node.ins[self.id] = self
+
+    def set_difficulty(self, difficulty):
+        self.difficulty = difficulty
+        self.mine_probability = self.mine_power * self.difficulty
 
     def __consume(self, item: Item):
         if type(item) == Block:
