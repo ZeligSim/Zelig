@@ -14,7 +14,7 @@ from bitcoin.messages import InvMessage, GetDataMessage
 from sim.network_util import get_delay
 
 logger.remove()
-logger.add(sys.stdout, level='INFO')
+# logger.add(sys.stdout, level='INFO')
 # logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
