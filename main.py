@@ -18,6 +18,10 @@ def main(cfg: DictConfig) -> List[Miner]:
 
     links, nodes = [], []
 
+    simulation_iters = cfg.simulation_iters
+    iter_seconds = cfg.iter_seconds
+    connections_per_node = cfg.connections_per_node
+
     setup_start = time.time()
     cfg_nodes = cfg.nodes
     for elt in cfg_nodes:
@@ -32,9 +36,9 @@ def main(cfg: DictConfig) -> List[Miner]:
     total_mine_power = sum([miner.mine_power for miner in nodes])
     difficulty = 1 / (cfg.block_int_iters * total_mine_power)
 
-    connections_per_node = cfg.connections_per_node
     for node in nodes:
         node.set_difficulty(difficulty)
+
         node.add_block(genesis_block)
         node_index = nodes.index(node)
         first_part = nodes[:node_index]
@@ -47,8 +51,6 @@ def main(cfg: DictConfig) -> List[Miner]:
     setup_time = setup_end - setup_start
 
     sim_start = time.time()
-    simulation_iters = cfg.simulation_iters
-    iter_seconds = cfg.iter_seconds
     for i in range(1, simulation_iters):
         iter_start = time.time()
         [node.step(iter_seconds) for node in nodes]
