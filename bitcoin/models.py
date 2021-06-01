@@ -30,6 +30,9 @@ class Block(Item):
         state = self.__dict__.copy()
         # Remove the unpicklable entries.
         del state['miner']
+        del state['sender_id']
+        del state['timestamp']
+        del state['size']
         return state
 
     def __setstate__(self, state):
@@ -74,6 +77,12 @@ class Miner(Node):
         del state['ins']
         del state['outs']
         del state['inbox']
+        del state['difficulty']
+        del state['mine_probability']
+        del state['timestamp']
+        del state['pos']
+        del state['region']
+        del state['timestamp']
         return state
 
     def __setstate__(self, state):
