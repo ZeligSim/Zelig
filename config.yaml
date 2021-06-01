@@ -5,7 +5,7 @@ sim_name: 4k_30m_32_conns
 sim_reps: 1
 
 # number of simulation steps
-simulation_iters: 200000
+simulation_iters: 30000000
 
 # real-time seconds per iteration
 iter_seconds: 0.1
