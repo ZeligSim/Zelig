@@ -23,7 +23,9 @@ class Block(Item):
         super().__init__(sender_id, 0, created_at)
         self.prev_id = prev_id
         self.miner = miner
-        self.size = np.random.normal(1.19, 0.26) * (10 ** 6)
+        self.tx_count = np.random.normal(2104.72, 236.63)
+        self.size = self.tx_count * np.random.normal(615.32, 89.43)
+        # self.size = np.random.normal(1.19, 0.26) * (10 ** 6)
 
     def __getstate__(self):
         """Return state values to be pickled."""
@@ -31,7 +33,6 @@ class Block(Item):
         # Remove the unpicklable entries.
         del state['miner']
         del state['sender_id']
-        del state['timestamp']
         del state['size']
         return state
 
@@ -82,7 +83,6 @@ class Miner(Node):
         del state['timestamp']
         del state['pos']
         del state['region']
-        del state['timestamp']
         return state
 
     def __setstate__(self, state):

@@ -35,6 +35,10 @@ def stale_block_rate(node: Miner) -> float:
     return (len(node.heads) - 1) / len(node.blockchain)
 
 
+def transactions_per_second(blocks: List[Block], sim_seconds: int) -> float:
+    return sum([block.tx_count for block in blocks]) / sim_seconds
+
+
 def avg_block_interval(node: Miner) -> float:
     total, count = 0, 1
     head = node.choose_prev_block()
