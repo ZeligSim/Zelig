@@ -14,7 +14,7 @@ from bitcoin.messages import InvMessage, GetDataMessage
 from sim.network_util import get_delay
 
 logger.remove()
-# logger.add(sys.stdout, level='INFO')
+logger.add(sys.stdout, level='INFO')
 # logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
@@ -24,6 +24,17 @@ class Block(Item):
         self.prev_id = prev_id
         self.miner = miner
         self.size = np.random.normal(1.19, 0.26) * (10 ** 6)
+
+    def __getstate__(self):
+        """Return state values to be pickled."""
+        state = self.__dict__.copy()
+        # Remove the unpicklable entries.
+        del state['miner']
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state values."""
+        self.__dict__.update(state)
 
     def __str__(self) -> str:
         return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
@@ -52,6 +63,22 @@ class Miner(Node):
 
         self.stat_block_rcvs: Dict[str, int] = dict()
         logger.info(f'CREATED MINER {self.name}')
+
+    def __getstate__(self):
+        """Return state values to be pickled."""
+        state = self.__dict__.copy()
+        # Remove the unpicklable entries.
+        del state['txpool']
+        del state['mine_power']
+        del state['mine_cost']
+        del state['ins']
+        del state['outs']
+        del state['inbox']
+        return state
+
+    def __setstate__(self, state):
+        """Restore state from the unpickled state values."""
+        self.__dict__.update(state)
 
     def __str__(self) -> str:
         return self.name
