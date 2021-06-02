@@ -1,11 +1,11 @@
 # name of simulation run, dumps will be under this folder
-sim_name: tx_testing
+sim_name: debugging
 
 # how many times to repeat the same simulation
 sim_reps: 1
 
 # number of simulation steps
-simulation_iters: 1000000
+simulation_iters: 20000
 
 # real-time seconds per iteration
 iter_seconds: 0.1
@@ -14,7 +14,7 @@ iter_seconds: 0.1
 block_int_iters: 6000
 
 # outgoing connections per node
-connections_per_node: 2
+connections_per_node: 3
 
 # setup nodes (regions: CH US RU KZ ML CN GE NR VN)
 #   at most one entry per region

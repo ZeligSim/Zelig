@@ -15,7 +15,7 @@ def main(cfg: DictConfig) -> List[Miner]:
     for rep in range(cfg.sim_reps):
         links, nodes = [], []
 
-        sim_name = f'{rep}_{cfg.sim_name}'
+        sim_name = f'{cfg.sim_name}_{rep}'
         simulation_iters = cfg.simulation_iters
         iter_seconds = cfg.iter_seconds
         connections_per_node = cfg.connections_per_node
@@ -29,9 +29,9 @@ def main(cfg: DictConfig) -> List[Miner]:
             mine_power = elt.region_mine_power / nodes_in_region
             for idx in range(nodes_in_region):
                 region = elt.region
-                nodes.append(Miner(f'MINER_{region}_{idx}', 0, 0, mine_power, Region(region)))
+                nodes.append(Miner(f'MINER_{region}_{idx}', mine_power, Region(region)))
 
-        genesis_block = Block('satoshi', 'satoshi', 0, 0, None)
+        genesis_block = Block(Miner('satoshi', 0, None), None, 0)
         total_mine_power = sum([miner.mine_power for miner in nodes])
         difficulty = 1 / (cfg.block_int_iters * total_mine_power)
 
@@ -58,7 +58,7 @@ def main(cfg: DictConfig) -> List[Miner]:
 
         Path(f'../../../dumps/{sim_name}').mkdir(parents=True, exist_ok=True)
         for node in nodes:
-            # node.log_blockchain()
+            node.log_blockchain()
             with open(f'../../../dumps/{sim_name}/{node.name}', 'wb+') as f:
                 pickle.dump(node, f)
 

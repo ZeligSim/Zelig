@@ -11,10 +11,9 @@ from sim.util import Region
 
 
 class Item:
-    def __init__(self, sender_id: str, size: int, created_at: int):
+    def __init__(self, sender_id: str, size: int):
         self.id = util.generate_uuid()
         self.size = size
-        self.created_at = created_at
         self.sender_id = sender_id
 
 
@@ -27,10 +26,9 @@ class Packet:
 
 
 class Node:
-    def __init__(self, pos_x: float, pos_y: float, region, timestamp=0):
+    def __init__(self, region, timestamp=0):
         self.id = util.generate_uuid()
         self.timestamp = timestamp
-        self.pos = util.Coords(pos_x, pos_y)
         self.region = region
         self.inbox = dict()
         self.ins = dict()

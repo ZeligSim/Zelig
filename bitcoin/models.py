@@ -14,15 +14,20 @@ from bitcoin.messages import InvMessage, GetDataMessage
 from sim.network_util import get_delay
 
 logger.remove()
-logger.add(sys.stdout, level='INFO')
+logger.add(sys.stdout, level='SUCCESS')
+
+
 # logger.add('logs/bitcoin_logs.txt', level='DEBUG')
 
 
 class Block(Item):
-    def __init__(self, miner: Node, sender_id: str, timestamp: int, created_at: int, prev_id: str):
-        super().__init__(sender_id, 0, created_at)
+    def __init__(self, miner: Node, prev_id: str, height: int):
+        super().__init__(None, 0)
         self.prev_id = prev_id
-        self.miner = miner
+
+        self.miner = miner.name
+        self.created_at = miner.timestamp
+        self.height = height
         self.tx_count = np.random.normal(2104.72, 236.63)
         self.size = self.tx_count * np.random.normal(615.32, 89.43)
         # self.size = np.random.normal(1.19, 0.26) * (10 ** 6)
@@ -31,7 +36,6 @@ class Block(Item):
         """Return state values to be pickled."""
         state = self.__dict__.copy()
         # Remove the unpicklable entries.
-        del state['miner']
         del state['sender_id']
         del state['size']
         return state
@@ -45,16 +49,16 @@ class Block(Item):
 
 
 class Transaction(Item):
-    def __init__(self, fee: int, sender_id: str, created_at: int):
-        super().__init__(sender_id, 0, created_at)
+    def __init__(self, fee: int, sender_id: str):
+        super().__init__(sender_id, 0)
         self.fee = fee
         self.size = 400  # bytes TODO
 
 
 class Miner(Node):
-    def __init__(self, name: str, pos_x: float, pos_y: float, mine_power: int, region: Region, mine_cost=0,
+    def __init__(self, name: str, mine_power: int, region: Region, mine_cost=0,
                  timestamp=0):
-        super().__init__(pos_x, pos_y, region, timestamp)
+        super().__init__(region, timestamp)
         self.name = name
         self.blockchain: Dict[str, Block] = dict()
         self.txpool: Dict[str, Transaction] = dict()
@@ -81,7 +85,6 @@ class Miner(Node):
         del state['difficulty']
         del state['mine_probability']
         del state['timestamp']
-        del state['pos']
         del state['region']
         return state
 
@@ -127,7 +130,7 @@ class Miner(Node):
                 if self.blockchain.get(item.item_id, None) is None:
                     logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
                     self.blockchain[item.item_id] = 'placeholder'  # not none
-                    self.__send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id, self.timestamp, 10, self.timestamp))
+                    self.__send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id))
             # elif msg.type == 'tx':
             #     if self.txpool.get(msg.item_id, None) is None:
             #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
@@ -145,7 +148,7 @@ class Miner(Node):
     def generate_block(self, prev=None) -> Block:
         if prev is None:
             prev = self.choose_prev_block()
-        block = Block(self, self.id, self.timestamp, self.timestamp, prev.id)
+        block = Block(self, prev.id, prev.height + 1)
         logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         self.add_block(block)
         self.stat_block_rcvs[block.id] = self.timestamp
@@ -170,7 +173,7 @@ class Miner(Node):
         return tx
 
     def __publish_item(self, item: Item, item_type: str):
-        msg = InvMessage(item.id, item_type, self.id, self.timestamp, 10, self.timestamp)
+        msg = InvMessage(item.id, item_type, self.id)
         for node in self.outs.values():
             self.__send_to(node, msg)
 
@@ -185,18 +188,8 @@ class Miner(Node):
 
     # returns the head of the longest chain
     def choose_prev_block(self) -> Block:
-        get_length = self.__get_length
-        lengths = [get_length(block) for block in self.heads if block != 'placeholder']
-        return self.heads[lengths.index(max(lengths))]
-
-    # get length of chain starting ending at `block`
-    def __get_length(self, block):
-        count = 0
-        prev = self.blockchain.get(block.prev_id, None)
-        while prev is not None:
-            count += 1
-            prev = self.blockchain.get(prev.prev_id, None)
-        return count
+        heights = [block.height for block in self.heads if block != 'placeholder']
+        return self.heads[heights.index(max(heights))]
 
     # -- LOGGING / INFO METHODS --
     def log_blockchain(self):
