@@ -14,6 +14,17 @@ def get_all_blocks(nodes: List[Miner]) -> Dict[str, Block]:
     return blocks
 
 
+# return list of blocks in the longest chain, starting with the head
+def get_longest_chain(blocks: Dict[str, Block]) -> List[Block]:
+    chain = []
+    heights = [block.height for block in blocks.values()]
+    head = list(blocks.values())[heights.index(max(heights))]
+    while head is not None:
+        chain.append(head)
+        head = blocks.get(head.prev_id, None)
+    return chain
+
+
 # given a block, computes how much time it took for that block to reach each node
 def block_prop_delays(block: Block, nodes: List[Miner]) -> List[int]:
     return [node.stat_block_rcvs.get(block.id, 2**64) - block.created_at for node in nodes]
