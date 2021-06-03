@@ -24,8 +24,8 @@ def main(cfg: DictConfig) -> List[Miner]:
         setup_start = time.time()
         cfg_nodes = cfg.nodes
         for elt in cfg_nodes:
-            nodes_in_region = 1
-            # nodes_in_region = elt.count
+            # nodes_in_region = 2
+            nodes_in_region = elt.count
             mine_power = elt.region_mine_power / nodes_in_region
             for idx in range(nodes_in_region):
                 region = elt.region
