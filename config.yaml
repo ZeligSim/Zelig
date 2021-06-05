@@ -1,20 +1,32 @@
 # name of simulation run, dumps will be under this folder
-sim_name: 4k_nodes_15m
+sim_name: testing_config
+
+# absolute path of the directory the nodes will be saved under the simulation name
+# don't leave '/' at the end
+results_directory: /Users/egeerdogan/desktop/Simbadt/dumps
+
+# simulation events logging level
+#   CRITICAL: none
+#   WARNING:  only simulator messages
+#   SUCCESS:  + block generations
+#   INFO:     + block receipts
+#   DEBUG:    + all protocol messages
+log_level: WARNING
 
 # how many times to repeat the same simulation
 sim_reps: 1
 
 # number of simulation steps
-simulation_iters: 15000000
+simulation_iters: 100000
 
-# real-time seconds per iteration
+# real-time seconds per simulation step
 iter_seconds: 0.1
 
 # expected block interval in iters
 block_int_iters: 6000
 
 # outgoing connections per node
-connections_per_node: 32
+connections_per_node: 2
 
 # setup nodes (regions: CH US RU KZ ML CN GE NR VN)
 #   at most one entry per region

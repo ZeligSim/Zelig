@@ -13,10 +13,6 @@ from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
 from sim.network_util import get_delay
 
-logger.remove()
-# logger.add(sys.stdout, level='SUCCESS')
-# logger.add('logs/bitcoin_logs.txt', level='DEBUG')
-
 
 class Block(Item):
     def __init__(self, miner: Node, prev_id: str, height: int):
@@ -33,7 +29,7 @@ class Block(Item):
     def __getstate__(self):
         """Return state values to be pickled."""
         state = self.__dict__.copy()
-        # Remove the unpicklable entries.
+        # Remove the unpickleable entries.
         del state['sender_id']
         del state['size']
         return state
