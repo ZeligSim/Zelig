@@ -8,7 +8,6 @@ from sim.util import Region
 def get_delay(a: Region, b: Region, size: float) -> float:
     """
     Returns the delay (in seconds) of a message between two regions.
-
     * a (`sim.util.Region`): Source region.
     * b (`sim.util.Region`): Destination region.
     * size (float): Message size in bytes.
@@ -21,7 +20,6 @@ def get_delay(a: Region, b: Region, size: float) -> float:
 def latency(a: Region, b: Region) -> float:
     """
     Returns the fixed latency value between two regions.
-
     * a (`sim.util.Region`): Source region.
     * b (`sim.util.Region`): Destination region.
     """
@@ -36,7 +34,6 @@ def speed(src: Region, dest: Region) -> float:
     Returns the bottleneck bandwidth between two regions. In other words,
 
         min(src_upload, dest_download).
-
     * a (`sim.util.Region`): Source region.
     * b (`sim.util.Region`): Destination region.
     :return:
