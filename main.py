@@ -20,7 +20,7 @@ def main(cfg: DictConfig) -> List[Miner]:
     logger.add(sys.stdout, level=cfg.log_level)
 
     for rep in range(cfg.sim_reps):
-        links, nodes = [], []
+        nodes = []
 
         sim_name = f'{cfg.sim_name}_{rep}'
         simulation_iters = cfg.simulation_iters
@@ -39,9 +39,9 @@ def main(cfg: DictConfig) -> List[Miner]:
             mine_power = elt.region_mine_power / nodes_in_region
             region = elt.region
             for idx in range(nodes_in_region):
-                nodes.append(Miner(f'MINER_{region}_{idx}', mine_power, Region(region)))
+                nodes.append(Miner(f'MINER_{region}_{idx}', mine_power, Region(region), iter_seconds))
 
-        genesis_block = Block(Miner('satoshi', 0, None), None, 0)
+        genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
         total_mine_power = sum([miner.mine_power for miner in nodes])
         difficulty = 1 / (cfg.block_int_iters * total_mine_power)
 
@@ -60,6 +60,7 @@ def main(cfg: DictConfig) -> List[Miner]:
                 n2.connect(node)
 
         # -- start sim --
+        logger.warning('Started simulation.')
         for i in range(1, simulation_iters):
             [node.step(iter_seconds) for node in nodes]
 
@@ -69,7 +70,7 @@ def main(cfg: DictConfig) -> List[Miner]:
             with open(f'{results_dir}/{sim_name}/{node.name}', 'wb+') as f:
                 pickle.dump(node, f)
 
-        logger.warning(f'Simulation {sim_name} complete. Dumped nodes to  {results_dir}/{sim_name}. Have a good day!')
+        logger.warning(f'Simulation {sim_name} complete. Dumped nodes to {results_dir}/{sim_name}. Have a good day!')
 
 
 main()

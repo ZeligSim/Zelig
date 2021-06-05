@@ -50,8 +50,7 @@ class Transaction(Item):
 
 
 class Miner(Node):
-    def __init__(self, name: str, mine_power: int, region: Region, mine_cost=0,
-                 timestamp=0):
+    def __init__(self, name: str, mine_power: int, region: Region, iter_seconds, mine_cost=0, timestamp=0):
         super().__init__(region, timestamp)
         self.name = name
         self.blockchain: Dict[str, Block] = dict()
@@ -62,6 +61,7 @@ class Miner(Node):
         self.mine_cost = mine_cost
         self.difficulty = 0
         self.mine_probability = 0
+        self.iter_seconds = iter_seconds
 
         self.stat_block_rcvs: Dict[str, int] = dict()
         logger.info(f'CREATED MINER {self.name}')
@@ -113,18 +113,18 @@ class Miner(Node):
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
             self.stat_block_rcvs[item.id] = self.timestamp
             self.add_block(item)
-            self.__publish_item(item, 'block')
+            self.publish_item(item, 'block')
         elif type(item) == Transaction:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
             self.txpool[item.id] = item
-            self.__publish_item(item, 'tx')
+            self.publish_item(item, 'tx')
         elif type(item) == InvMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
                 if self.blockchain.get(item.item_id, None) is None:
                     logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
                     self.blockchain[item.item_id] = 'placeholder'  # not none
-                    self.__send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id))
+                    self.send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id))
             # elif msg.type == 'tx':
             #     if self.txpool.get(msg.item_id, None) is None:
             #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
@@ -134,11 +134,10 @@ class Miner(Node):
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
-                self.__send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
+                self.send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
             # elif msg.type == 'tx':
             #     self.__send_to(msg.sender_id, self.txpool[msg.item_id])
 
-    # FIXME: public for testing
     def generate_block(self, prev=None) -> Block:
         if prev is None:
             prev = self.choose_prev_block()
@@ -146,10 +145,9 @@ class Miner(Node):
         logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         self.add_block(block)
         self.stat_block_rcvs[block.id] = self.timestamp
-        self.__publish_item(block, 'block')
+        self.publish_item(block, 'block')
         return block
 
-    # FIXME: public for testing
     # remove block.prev from heads if exists and add block to blockchain
     def add_block(self, block):
         self.blockchain[block.id] = block
@@ -159,21 +157,21 @@ class Miner(Node):
             pass
         self.heads.append(block)
 
-    def __generate_transaction(self) -> Transaction:
+    def generate_transaction(self) -> Transaction:
         fee = 10
         tx = Transaction(fee, self.id, self.timestamp)
         self.txpool[tx.id] = tx
-        self.__publish_item(tx, 'tx')
+        self.publish_item(tx, 'tx')
         return tx
 
-    def __publish_item(self, item: Item, item_type: str):
+    def publish_item(self, item: Item, item_type: str):
         msg = InvMessage(item.id, item_type, self.id)
         for node in self.outs.values():
-            self.__send_to(node, msg)
+            self.send_to(node, msg)
 
-    def __send_to(self, node: Node, item: Item):
+    def send_to(self, node: Node, item: Item):
         packet = Packet(self.timestamp, item)
-        delay = get_delay(self.region, node.region, item.size) / 0.1
+        delay = get_delay(self.region, node.region, item.size) / self.iter_seconds
         packet.reveal_at = math.ceil(self.timestamp + delay)
         try:
             node.inbox[packet.reveal_at].append(packet)
@@ -185,7 +183,6 @@ class Miner(Node):
         heights = [block.height for block in self.heads if block != 'placeholder']
         return self.heads[heights.index(max(heights))]
 
-    # -- LOGGING / INFO METHODS --
     def log_blockchain(self):
         head = self.choose_prev_block()
         logger.warning(f'{self.name}')
