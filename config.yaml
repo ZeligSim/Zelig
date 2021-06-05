@@ -7,7 +7,7 @@ results_directory: /Users/egeerdogan/desktop/Simbadt/dumps
 
 # simulation events logging level
 #   CRITICAL: none
-#   WARNING:  only simulator messages
+#   WARNING:  only simulator messages (recommended)
 #   SUCCESS:  + block generations
 #   INFO:     + block receipts
 #   DEBUG:    + all protocol messages

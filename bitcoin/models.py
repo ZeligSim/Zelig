@@ -18,24 +18,19 @@ class Block(Item):
     def __init__(self, miner: Node, prev_id: str, height: int):
         super().__init__(None, 0)
         self.prev_id = prev_id
-
         self.miner = miner.name
         self.created_at = miner.timestamp
         self.height = height
         self.tx_count = np.random.normal(2104.72, 236.63)
         self.size = self.tx_count * np.random.normal(615.32, 89.43)
-        # self.size = np.random.normal(1.19, 0.26) * (10 ** 6)
 
     def __getstate__(self):
-        """Return state values to be pickled."""
         state = self.__dict__.copy()
-        # Remove the unpickleable entries.
         del state['sender_id']
         del state['size']
         return state
 
     def __setstate__(self, state):
-        """Restore state from the unpickled state values."""
         self.__dict__.update(state)
 
     def __str__(self) -> str:
@@ -170,7 +165,7 @@ class Miner(Node):
             self.send_to(node, msg)
 
     def send_to(self, node: Node, item: Item):
-        packet = Packet(self.timestamp, item)
+        packet = Packet(item)
         delay = get_delay(self.region, node.region, item.size) / self.iter_seconds
         packet.reveal_at = math.ceil(self.timestamp + delay)
         try:

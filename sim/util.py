@@ -1,11 +1,14 @@
+"""
+Various utility classes and methods.
+"""
+
 import uuid
 import math
 from enum import Enum
 
 
-# top 10 countries for April 2020
-# corresponding to > 95% of the global hash power
 class Region(Enum):
+    """The supported regions."""
     US = 'US'
     RU = 'RU'
     KZ = 'KZ'
@@ -17,16 +20,10 @@ class Region(Enum):
     CH = 'CH'
 
 
-class Coords:
-    def __init__(self, x: float, y: float):
-        self.x = x
-        self.y = y
-
-    def distance(self, c) -> float:
-        return math.sqrt((self.x - c.x) ** 2 + (self.y - c.y) ** 2)
-
-
 def generate_uuid() -> str:
+    """
+    Generate UUIDs to use as `sim.base_models.Node` and `sim.base_models.Item` ids.
+    """
     return str(uuid.uuid4())
 
 

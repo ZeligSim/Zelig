@@ -1,20 +1,46 @@
+"""
+Helper functions to perform network-layer calculations.
+"""
+
 from sim.util import Region
 
 
-def get_delay(a: Region, b: Region, size: int) -> int:
+def get_delay(a: Region, b: Region, size: float) -> float:
+    """
+    Returns the delay (in seconds) of a message between two regions.
+
+    * a (`sim.util.Region`): Source region.
+    * b (`sim.util.Region`): Destination region.
+    * size (float): Message size in bytes.
+    """
     lat = latency(a, b)
     trans = (size / speed(a, b))
     return lat + trans
 
 
-def latency(a: Region, b: Region) -> int:
+def latency(a: Region, b: Region) -> float:
+    """
+    Returns the fixed latency value between two regions.
+
+    * a (`sim.util.Region`): Source region.
+    * b (`sim.util.Region`): Destination region.
+    """
     lat = LATENCY.get((a, b), None)
     if lat is None:
         return LATENCY[(b, a)]
     return lat
 
 
-def speed(src: Region, dest: Region) -> int:
+def speed(src: Region, dest: Region) -> float:
+    """
+    Returns the bottleneck bandwidth between two regions. In other words,
+
+        min(src_upload, dest_download).
+
+    * a (`sim.util.Region`): Source region.
+    * b (`sim.util.Region`): Destination region.
+    :return:
+    """
     return min(SPEED[src]['up'], SPEED[dest]['down'])
 
 
