@@ -60,6 +60,13 @@ class Node:
         self.outs: Dict[str, Node] = dict()
         """Dictionary storing outgoing connections. Keys are `Node` ids and values are `Node`s."""
 
+        self.last_reveal_times: Dict[str, int] = dict()
+        """
+        Dictionary with node ids as keys and integers as values. Values correspond to the reveal time of the last message sent to the node with the given id.
+        
+        This is used to simulate links that can only  transmit one message at a time. A new message starts transmission only after the previous one has been received.
+        """
+
     def step(self, seconds: float) -> List[Item]:
         """
         Perform one simulation step. Increments its timestamp by 1 and returns the list of `Item` objects to act on in that step.

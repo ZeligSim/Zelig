@@ -220,7 +220,9 @@ class Miner(Node):
         """
         packet = Packet(item)
         delay = get_delay(self.region, node.region, item.size) / self.iter_seconds
-        packet.reveal_at = math.ceil(self.timestamp + delay)
+        reveal_time = math.ceil(max(self.timestamp, self.last_reveal_times.get(node.id, 0)) + delay)
+        self.last_reveal_times[node.id] = reveal_time
+        packet.reveal_at = reveal_time
         try:
             node.inbox[packet.reveal_at].append(packet)
         except KeyError:

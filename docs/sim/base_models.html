@@ -64,6 +64,9 @@
                                 <a class="variable" href="#Node.outs">outs</a>
                         </li>
                         <li>
+                                <a class="variable" href="#Node.last_reveal_times">last_reveal_times</a>
+                        </li>
+                        <li>
                                 <a class="function" href="#Node.step">step</a>
                         </li>
                 </ul>
@@ -150,6 +153,13 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">outs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="sd">&quot;&quot;&quot;Dictionary storing outgoing connections. Keys are `Node` ids and values are `Node`s.&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_reveal_times</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dictionary with node ids as keys and integers as values. Values correspond to the reveal time of the last message sent to the node with the given id.</span>
+<span class="sd">        </span>
+<span class="sd">        This is used to simulate links that can only  transmit one message at a time. A new message starts transmission only after the previous one has been received.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Item</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
@@ -319,6 +329,13 @@
         <span class="bp">self</span><span class="o">.</span><span class="n">outs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="sd">&quot;&quot;&quot;Dictionary storing outgoing connections. Keys are `Node` ids and values are `Node`s.&quot;&quot;&quot;</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_reveal_times</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dictionary with node ids as keys and integers as values. Values correspond to the reveal time of the last message sent to the node with the given id.</span>
+<span class="sd">        </span>
+<span class="sd">        This is used to simulate links that can only  transmit one message at a time. A new message starts transmission only after the previous one has been received.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
     <span class="k">def</span> <span class="nf">step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">seconds</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Item</span><span class="p">]:</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        Perform one simulation step. Increments its timestamp by 1 and returns the list of `Item` objects to act on in that step.</span>
@@ -364,6 +381,13 @@
 
         <span class="bp">self</span><span class="o">.</span><span class="n">outs</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Node</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
         <span class="sd">&quot;&quot;&quot;Dictionary storing outgoing connections. Keys are `Node` ids and values are `Node`s.&quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_reveal_times</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dictionary with node ids as keys and integers as values. Values correspond to the reveal time of the last message sent to the node with the given id.</span>
+<span class="sd">        </span>
+<span class="sd">        This is used to simulate links that can only  transmit one message at a time. A new message starts transmission only after the previous one has been received.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
 </pre></div>
 
         </details>
@@ -407,6 +431,19 @@
     </div>
 
             <div class="docstring"><p>Dictionary storing outgoing connections. Keys are <code><a href="#Node">Node</a></code> ids and values are <code><a href="#Node">Node</a></code>s.</p>
+</div>
+
+
+                            </div>
+                            <div id="Node.last_reveal_times" class="classattr">
+                                            <div class="attr variable"><a class="headerlink" href="#Node.last_reveal_times">#&nbsp;&nbsp</a>
+
+        <span class="name">last_reveal_times</span><span class="annotation">: Dict[str, int]</span>
+    </div>
+
+            <div class="docstring"><p>Dictionary with node ids as keys and integers as values. Values correspond to the reveal time of the last message sent to the node with the given id.</p>
+
+<p>This is used to simulate links that can only  transmit one message at a time. A new message starts transmission only after the previous one has been received.</p>
 </div>
 
 

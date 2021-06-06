@@ -1,5 +1,5 @@
 # name of simulation run, dumps will be under this folder
-sim_name: testing_config
+sim_name: reveal_testing
 
 # absolute path of the directory the nodes will be saved under the simulation name
 # don't leave '/' at the end
@@ -11,13 +11,13 @@ results_directory: /Users/egeerdogan/desktop/Simbadt/dumps
 #   SUCCESS:  + block generations
 #   INFO:     + block receipts
 #   DEBUG:    + all protocol messages
-log_level: WARNING
+log_level: SUCCESS
 
 # how many times to repeat the same simulation
 sim_reps: 1
 
 # number of simulation steps
-simulation_iters: 100000
+simulation_iters: 30000000
 
 # real-time seconds per simulation step
 iter_seconds: 0.1
