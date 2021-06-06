@@ -6,6 +6,7 @@ import hydra
 import pickle
 from typing import List
 from pathlib import Path
+import importlib
 
 from loguru import logger
 
@@ -22,10 +23,11 @@ def main(cfg: DictConfig) -> List[Miner]:
         nodes = []
 
         sim_name = f'{cfg.sim_name}_{rep}'
-        simulation_iters = cfg.simulation_iters
+        simulation_iters = cfg.sim_iters
         iter_seconds = cfg.iter_seconds
         connections_per_node = cfg.connections_per_node
         results_dir = cfg.results_directory
+        nodes_in_region = cfg.nodes_in_each_region
 
         logger.warning(f'Simulation {sim_name} ({simulation_iters} iterations).')
         logger.warning('Creating nodes...')
@@ -33,12 +35,12 @@ def main(cfg: DictConfig) -> List[Miner]:
         # -- create nodes --
         cfg_nodes = cfg.nodes
         for elt in cfg_nodes:
-            nodes_in_region = 1
-            # nodes_in_region = elt.count
-            mine_power = elt.region_mine_power / nodes_in_region
+            num_nodes = max(nodes_in_region, elt.count)
+            mine_power = elt.region_mine_power / num_nodes
             region = elt.region
-            for idx in range(nodes_in_region):
-                nodes.append(Miner(f'MINER_{region}_{idx}', mine_power, Region(region), iter_seconds))
+            for idx in range(num_nodes):
+                NodeClass = getattr(importlib.import_module("bitcoin.models"), elt.type)
+                nodes.append(NodeClass(f'MINER_{region}_{idx}', mine_power, Region(region), iter_seconds))
 
         genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
         total_mine_power = sum([miner.mine_power for miner in nodes])

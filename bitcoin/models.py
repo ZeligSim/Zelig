@@ -98,7 +98,6 @@ class Miner(Node):
         del state['difficulty']
         del state['mine_probability']
         del state['timestamp']
-        del state['region']
         return state
 
     def __setstate__(self, state):
