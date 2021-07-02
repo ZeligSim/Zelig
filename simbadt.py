@@ -4,13 +4,14 @@ import os
 from omegaconf import DictConfig
 import hydra
 import pickle
-from typing import List
+from typing import Callable
 from pathlib import Path
 import importlib
 import yaml
 
 from loguru import logger
 
+from sim.base_models import Node
 from bitcoin.models import Block, Miner
 from sim.util import Region
 
@@ -26,18 +27,29 @@ class Sim:
         self.block_int_iters = 6000
         self.connections_per_node = 2
         self.nodes_in_each_region = -1
-        self.__set_log_level(self.log_level)
+        self.set_log_level(self.log_level)
         self.config_file = config_file
+
+        self.nodes = []
+        self.connection_predicate: Callable[[Node, Node], bool] = None
 
     def run(self):
         if self.config_file is not None:
             self.__load_config_file(detailed=False)
 
         iter_seconds = self.iter_seconds
+        logger.warning(f'Simulation {self.name} ({self.sim_iters} iterations).')
         logger.warning('Started simulation.')
         for rep in range(self.sim_reps):
             if self.config_file is not None:
                 self.__load_config_file(detailed=True)
+            else:
+                [node.reset() for node in self.nodes]
+                for n1 in self.nodes:
+                    for n2 in self.nodes:
+                        if self.connection_predicate(n1, n2):
+                            n1.connect(n2)
+                self.__setup_mining()
 
             sim_name = f'{self.name}_{rep}'
             for i in range(1, self.sim_iters):
@@ -48,6 +60,18 @@ class Sim:
                 with open(f'{self.results_dir}/{sim_name}/{node.name}', 'wb+') as f:
                     pickle.dump(node, f)
             logger.warning(f'Simulation {sim_name} complete. Dumped nodes to {self.results_dir}/{sim_name}. Have a good day!')
+
+    def add_node(self, node: Node):
+        self.nodes.append(node)
+
+    def __setup_mining(self):
+        """Adds genesis block and setups mining probabilities for each node based on total mine power"""
+        genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
+        total_mine_power = sum([miner.mine_power for miner in self.nodes])
+        difficulty = 1 / (self.block_int_iters * total_mine_power)
+        for node in self.nodes:
+            node.set_difficulty(difficulty)
+            node.add_block(genesis_block)
 
     def __load_config_file(self, detailed=False):
         with open(self.config_file, 'r') as f:
@@ -60,12 +84,10 @@ class Sim:
             self.block_int_iters = config['block_int_iters']
             self.nodes_in_each_region = config['nodes_in_each_region']
             self.connections_per_node = config['connections_per_node']
-            self.__set_log_level(config['log_level'])
+            self.set_log_level(config['log_level'])
 
             if detailed:
-                logger.warning(f'Simulation {self.name} ({self.sim_iters} iterations).')
                 logger.warning('Creating nodes...')
-
                 self.nodes = []
                 for node in config['nodes']:
                     num_nodes = node['count'] if self.nodes_in_each_region == -1 else self.nodes_in_each_region
@@ -74,14 +96,10 @@ class Sim:
                     for idx in range(num_nodes):
                         NodeClass = getattr(importlib.import_module('bitcoin.models'), node['type'])
                         self.nodes.append(NodeClass(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds))
-                genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
-                total_mine_power = sum([miner.mine_power for miner in self.nodes])
-                difficulty = 1 / (self.block_int_iters * total_mine_power)
+                self.__setup_mining()
 
                 logger.warning('Setting up random P2P network...')
                 for node in self.nodes:
-                    node.set_difficulty(difficulty)
-                    node.add_block(genesis_block)
                     node_index = self.nodes.index(node)
                     first_part = self.nodes[:node_index]
                     second_part = self.nodes[node_index + 1:]
@@ -91,6 +109,6 @@ class Sim:
                         n2.connect(node)
 
     @staticmethod
-    def __set_log_level(level:str):
+    def set_log_level(level:str):
         logger.remove()
         logger.add(sys.stdout, level=level)

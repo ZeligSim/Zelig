@@ -107,6 +107,13 @@ class Miner(Node):
     def __str__(self) -> str:
         return self.name
 
+    def reset(self):
+        """Reset state back to simulation start."""
+        super().reset()
+        self.blockchain = dict()
+        self.heads = []
+        self.stat_block_rcvs = dict()
+
     def step(self, seconds: float):
         items = super().step(seconds)
         for item in items:
