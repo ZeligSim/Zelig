@@ -42,10 +42,11 @@ class Simulation:
                 self.__load_config_file(detailed=True)
             else:
                 [node.reset() for node in self.nodes]
-                for n1 in self.nodes:
-                    for n2 in self.nodes:
+                for idx, n1 in enumerate(self.nodes):
+                    for n2 in self.nodes[:idx] + self.nodes[idx+1:]:
                         if self.connection_predicate(n1, n2):
                             n1.connect(n2)
+                            n2.connect(n1)
                 self.__setup_mining()
 
             sim_name = f'{self.name}_{rep}'
