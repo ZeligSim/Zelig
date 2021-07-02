@@ -1,22 +1,19 @@
+import importlib
+import pickle
 import random
 import sys
-import os
-from omegaconf import DictConfig
-import hydra
-import pickle
-from typing import Callable
 from pathlib import Path
-import importlib
-import yaml
+from typing import Callable
 
+import yaml
 from loguru import logger
 
-from sim.base_models import Node
 from bitcoin.models import Block, Miner
+from sim.base_models import Node
 from sim.util import Region
 
 
-class Sim:
+class Simulation:
     def __init__(self, config_file=None):
         self.name = ""
         self.results_dir = ""
@@ -59,7 +56,8 @@ class Sim:
             for node in self.nodes:
                 with open(f'{self.results_dir}/{sim_name}/{node.name}', 'wb+') as f:
                     pickle.dump(node, f)
-            logger.warning(f'Simulation {sim_name} complete. Dumped nodes to {self.results_dir}/{sim_name}. Have a good day!')
+            logger.warning(
+                f'Simulation {sim_name} complete. Dumped nodes to {self.results_dir}/{sim_name}. Have a good day!')
 
     def add_node(self, node: Node):
         self.nodes.append(node)
@@ -95,7 +93,8 @@ class Sim:
                     region = node['region']
                     for idx in range(num_nodes):
                         NodeClass = getattr(importlib.import_module('bitcoin.models'), node['type'])
-                        self.nodes.append(NodeClass(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds))
+                        self.nodes.append(
+                            NodeClass(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds))
                 self.__setup_mining()
 
                 logger.warning('Setting up random P2P network...')
@@ -109,6 +108,6 @@ class Sim:
                         n2.connect(node)
 
     @staticmethod
-    def set_log_level(level:str):
+    def set_log_level(level: str):
         logger.remove()
         logger.add(sys.stdout, level=level)
