@@ -2,6 +2,7 @@ import importlib
 import pickle
 import random
 import sys
+import argparse
 from pathlib import Path
 from typing import Callable
 
@@ -43,7 +44,7 @@ class Simulation:
             else:
                 [node.reset() for node in self.nodes]
                 for idx, n1 in enumerate(self.nodes):
-                    for n2 in self.nodes[:idx] + self.nodes[idx+1:]:
+                    for n2 in self.nodes[:idx] + self.nodes[idx + 1:]:
                         if self.connection_predicate(n1, n2):
                             n1.connect(n2)
                             n2.connect(n1)
@@ -115,12 +116,17 @@ class Simulation:
 
 
 if __name__ == "__main__":
-    try:
-        config_name = sys.argv[1]
-    except:
-        config_name = 'config.yaml'
+    parser = argparse.ArgumentParser(description="Blockchain simulator.")
+    parser.add_argument('-c', metavar='filename', default='config.yaml', help='Name of the YAML configuration file (default: config.yaml)')
+    parser.add_argument('-s', metavar='seed', type=int, help='Seed for random number generation')
+    args = parser.parse_args()
+    config_name = args.c
+    seed = args.s
+
     if config_name[-5:] != '.yaml':
         print('Please provide a YAML file for configuration.')
         exit()
+    if seed is not None:
+        random.seed(seed)
     sim = Simulation(config_name)
     sim.run()
