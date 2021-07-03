@@ -119,8 +119,6 @@ class Miner(Node):
         for item in items:
             self.consume(item)
 
-        # if random.random() <= 0.001:
-        #     self.__generate_transaction()
         if random.random() <= self.mine_probability:
             self.generate_block()
 

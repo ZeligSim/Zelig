@@ -2,8 +2,6 @@
 The classes that make up the core simulator.
 """
 
-
-from collections import deque
 from enum import Enum
 
 from loguru import logger
