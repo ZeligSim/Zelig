@@ -115,5 +115,12 @@ class Simulation:
 
 
 if __name__ == "__main__":
-    sim = Simulation('config.yaml')
+    try:
+        config_name = sys.argv[1]
+    except:
+        config_name = 'config.yaml'
+    if config_name[-5:] != '.yaml':
+        print('Please provide a YAML file for configuration.')
+        exit()
+    sim = Simulation(config_name)
     sim.run()
