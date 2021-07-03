@@ -4,10 +4,6 @@ from sim.util import Region
 
 from simbadt import Simulation
 
-""" CONFIGURING WITH CONFIG FILE """
-# sim = Sim('config.yaml')
-# sim.run()
-
 """ CONFIGURING WITH CODE """
 sim = Simulation()
 sim.set_log_level('SUCCESS')

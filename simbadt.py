@@ -112,3 +112,8 @@ class Simulation:
     def set_log_level(level: str):
         logger.remove()
         logger.add(sys.stdout, level=level)
+
+
+if __name__ == "__main__":
+    sim = Simulation('config.yaml')
+    sim.run()
