@@ -1,7 +1,7 @@
 # name of simulation run, dumps will be under this folder
-sim_name: reveal_testing
+sim_name: testing
 
-# absolute path of the directory the nodes will be saved under the simulation name
+# path of the directory the nodes will be saved under the simulation name
 # don't leave '/' at the end
 results_directory: /Users/egeerdogan/desktop/Simbadt/dumps
 
@@ -14,10 +14,10 @@ results_directory: /Users/egeerdogan/desktop/Simbadt/dumps
 log_level: SUCCESS
 
 # how many times to repeat the same simulation
-sim_reps: 1
+sim_reps: 10
 
 # number of simulation steps
-sim_iters: 30000000
+sim_iters: 100000
 
 # real-time seconds per simulation step
 iter_seconds: 0.1
@@ -28,13 +28,14 @@ block_int_iters: 6000
 # outgoing connections per node
 connections_per_node: 2
 
-# number of nodes in each region
+# number of nodes per region
 # set -1 to use the real-world values provided below
-nodes_in_each_region: -1
+nodes_in_each_region: 2
 
-# setup nodes (regions: CH US RU KZ ML CN GE NR VN)
+# setup nodes
 #   at most one entry per region
 # miner powers are represented as that region's percent share in global power
+# comment out items to remove region
 nodes:
   - count: 189
     region: CH

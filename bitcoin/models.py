@@ -107,13 +107,18 @@ class Miner(Node):
     def __str__(self) -> str:
         return self.name
 
+    def reset(self):
+        """Reset state back to simulation start."""
+        super().reset()
+        self.blockchain = dict()
+        self.heads = []
+        self.stat_block_rcvs = dict()
+
     def step(self, seconds: float):
         items = super().step(seconds)
         for item in items:
             self.consume(item)
 
-        # if random.random() <= 0.001:
-        #     self.__generate_transaction()
         if random.random() <= self.mine_probability:
             self.generate_block()
 

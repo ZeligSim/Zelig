@@ -2,8 +2,6 @@
 The classes that make up the core simulator.
 """
 
-
-from collections import deque
 from enum import Enum
 
 from loguru import logger
@@ -77,3 +75,13 @@ class Node:
             return [packet.payload for packet in self.inbox.pop(self.timestamp)]
         except KeyError:
             return []
+
+    def reset(self):
+        """
+        Reset node state back to simulation start, deleting connections as well.
+        """
+        self.timestamp = 0
+        self.inbox = dict()
+        self.ins = dict()
+        self.outs = dict()
+        self.last_reveal_times = dict()
