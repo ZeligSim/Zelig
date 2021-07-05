@@ -2,7 +2,7 @@ import random
 from bitcoin.models import Miner
 from sim.util import Region
 
-from simbadt import Simulation
+from zelig import Simulation
 
 """ CONFIGURING WITH CODE """
 sim = Simulation()
