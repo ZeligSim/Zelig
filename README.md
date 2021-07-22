@@ -20,4 +20,13 @@ TODO
 
 ## Citing Zelig in Your Work
 
-TODO
+```
+@misc{erdogan2021demo,
+      title={Demo -- Zelig: Customizable Blockchain Simulator}, 
+      author={Ege Erdogan and Can Arda Aydin and Oznur Ozkasap and Waris Gill},
+      year={2021},
+      eprint={2107.07972},
+      archivePrefix={arXiv},
+      primaryClass={cs.CR}
+}
+```
