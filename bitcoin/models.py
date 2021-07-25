@@ -5,6 +5,8 @@ Main implementation of the Bitcoin simulator.
 import math
 import random
 import sys
+import heapq
+
 import numpy as np
 
 from typing import Dict
@@ -50,11 +52,24 @@ class Block(Item):
         return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
 
 
-# class Transaction(Item):
-#     def __init__(self, fee: int, sender_id: str):
-#         super().__init__(sender_id, 0)
-#         self.fee = fee
-#         self.size = 400  # bytes TODO
+class Transaction(Item):
+    def __init__(self, sender_id: str, created_at: int):
+        super().__init__(sender_id, 0)
+        self.fee = 0
+        self.size = 400  # bytes
+        self.value = 100
+        self.created_at = created_at
+        self.feerate = self.fee / self.size
+
+    def __str__(self) -> str:
+        return f'TX (id:{self.id}, value: {self.value}, feerate: {self.feerate})'
+
+    def __lt__(self, other):
+        """
+        Compare this Transaction object with another on the basis of their feerates.
+        We want the mempool heap to treat the highest feerate as the "minimum" element, so the comparison operator is <=.
+        """
+        return self.feerate >= other.feerate
 
 
 class Miner(Node):
@@ -80,11 +95,18 @@ class Miner(Node):
         self.blockchain: Dict[str, Block] = dict()
         """A dictionary that stores block `Block` ids as keys and """
 
+        self.mempool: List[Transaction] = []  # heapq
+        self.tx_ids: Dict[str, Transaction] = dict()
+
         self.heads: List[Block] = []
         """Stores the current head blocks (blocks that hasn't been mined on) as a list."""
 
         self.stat_block_rcvs: Dict[str, int] = dict()
         """Stores the receipt time of blocks, to calculate metrics such as block propagation times."""
+
+        self.stat_tx_rcvs: Dict[str, int] = dict()
+        """Stores the receipt time of transactions, for analysis."""
+
         logger.info(f'CREATED MINER {self.name}')
 
     def __getstate__(self):
@@ -149,10 +171,11 @@ class Miner(Node):
             self.stat_block_rcvs[item.id] = self.timestamp
             self.add_block(item)
             self.publish_item(item, 'block')
-        # elif type(item) == Transaction:
-        #     logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
-        #     self.txpool[item.id] = item
-        #     self.publish_item(item, 'tx')
+        elif type(item) == Transaction:
+            logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
+            self.stat_tx_rcvs[item.id] = self.timestamp
+            self.__add_tx(item.id, item)
+            self.publish_item(item, 'tx')
         elif type(item) == InvMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
@@ -160,18 +183,17 @@ class Miner(Node):
                     logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
                     self.blockchain[item.item_id] = 'placeholder'  # not none
                     self.send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id))
-            # elif msg.type == 'tx':
-            #     if self.txpool.get(msg.item_id, None) is None:
-            #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-            #         self.txpool[msg.item_id] = 'placeholder'  # not none
-            #         getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
-            #         self.__send_to(msg.sender_id, getdata)
+            elif item.type == 'tx':
+                if self.tx_ids.get(item.item_id, None) is None:
+                    logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+                    self.__add_tx(item.item_id)
+                    self.send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id))
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
                 self.send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
-            # elif msg.type == 'tx':
-            #     self.__send_to(msg.sender_id, self.txpool[msg.item_id])
+            elif item.type == 'tx':
+                self.send_to(self.outs[item.sender_id], self.tx_ids[item.item_id])
 
     def generate_block(self, prev: Block = None) -> Block:
         """
@@ -238,6 +260,19 @@ class Miner(Node):
         """
         heights = [block.height for block in self.heads if block != 'placeholder']
         return self.heads[heights.index(max(heights))]
+
+    def __add_tx(self, id: str, tx: Transaction = None):
+        if tx is None:
+            self.tx_ids[id] = True
+        else:
+            self.tx_ids[id] = tx
+            heapq.heappush(self.mempool, tx)
+
+    def __del_tx(self, id: str, tx: Transaction = None):
+        del self.tx_ids[id]
+        if tx is not None:
+            self.mempool.remove(tx)
+            heapq.heapify(self.mempool)
 
     def log_blockchain(self):
         head = self.choose_prev_block()

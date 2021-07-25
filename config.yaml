@@ -17,7 +17,7 @@ log_level: SUCCESS
 sim_reps: 10
 
 # number of simulation steps
-sim_iters: 100000
+sim_iters: 10000
 
 # real-time seconds per simulation step
 iter_seconds: 0.1
