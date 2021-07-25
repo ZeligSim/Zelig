@@ -23,6 +23,7 @@ class Simulation:
         self.sim_iters = 1
         self.iter_seconds = 0.1
         self.block_int_iters = 6000
+        self.max_block_size = 10**6
         self.connections_per_node = 2
         self.nodes_in_each_region = -1
         self.set_log_level(self.log_level)
@@ -70,6 +71,7 @@ class Simulation:
         total_mine_power = sum([miner.mine_power for miner in self.nodes])
         difficulty = 1 / (self.block_int_iters * total_mine_power)
         for node in self.nodes:
+            node.max_block_size = self.max_block_size
             node.set_difficulty(difficulty)
             node.add_block(genesis_block)
 
@@ -82,6 +84,7 @@ class Simulation:
             self.sim_iters = config['sim_iters']
             self.iter_seconds = config['iter_seconds']
             self.block_int_iters = config['block_int_iters']
+            self.max_block_size = config['max_block_size']
             self.nodes_in_each_region = config['nodes_in_each_region']
             self.connections_per_node = config['connections_per_node']
             self.set_log_level(config['log_level'])

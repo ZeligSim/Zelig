@@ -36,8 +36,20 @@ class Block(Item):
         self.miner = miner.name
         self.created_at = miner.timestamp
         self.height = height
-        self.tx_count = np.random.normal(2104.72, 236.63)
-        self.size = self.tx_count * np.random.normal(615.32, 89.43)
+        # self.tx_count = np.random.normal(2104.72, 236.63)
+        # self.size = self.tx_count * np.random.normal(615.32, 89.43)
+        self.size = 80  # size of block header in bytes
+        self.tx_count = 0
+
+        self.transactions = []
+
+    def add_tx(self, tx):
+        self.transactions.append(tx)
+        self.size += tx.size
+        self.tx_count += 1
+
+    def has_tx(self, tx):
+        return tx in self.transactions
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -91,6 +103,7 @@ class Miner(Node):
         self.difficulty = 0
         self.mine_probability = 0
         self.iter_seconds = iter_seconds
+        self.max_block_size = 1
 
         self.blockchain: Dict[str, Block] = dict()
         """A dictionary that stores block `Block` ids as keys and """
@@ -203,9 +216,11 @@ class Miner(Node):
         if prev is None:
             prev = self.choose_prev_block()
         block = Block(self, prev.id, prev.height + 1)
-        logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
+        while block.size < self.max_block_size:
+            block.add_tx(heapq.heappop(self.mempool))
         self.add_block(block)
         self.stat_block_rcvs[block.id] = self.timestamp
+        logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         self.publish_item(block, 'block')
         return block
 
