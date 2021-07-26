@@ -73,6 +73,7 @@ class Simulation:
         difficulty = 1 / (self.block_int_iters * total_mine_power)
         for node in self.nodes:
             node.tx_strategy = tx_strategy
+            node.tx_per_iter = self.tx_per_node_per_iter
             node.max_block_size = self.max_block_size
             node.set_difficulty(difficulty)
             node.add_block(genesis_block)
@@ -85,6 +86,7 @@ class Simulation:
             self.sim_reps = config['sim_reps']
             self.sim_iters = config['sim_iters']
             self.iter_seconds = config['iter_seconds']
+            self.tx_per_node_per_iter = config['tx_per_node_per_iter']
             self.block_int_iters = config['block_int_iters']
             self.max_block_size = config['max_block_size']
             self.tx_modeling = config['tx_modeling'] + 'TxStrategy'

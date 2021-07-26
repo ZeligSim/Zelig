@@ -130,6 +130,9 @@ class FullTxStrategy(TxStrategy):
         Remove the transactions in the  block from the local mempool.
         """
         for tx in block.transactions:
-            del node.tx_ids[tx.id]
-            node.mempool.remove(tx)
+            # del node.tx_ids[tx.id]
+            try:
+                node.mempool.remove(tx)
+            except ValueError:
+                pass
         heapq.heapify(node.mempool)

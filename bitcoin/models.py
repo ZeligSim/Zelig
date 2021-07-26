@@ -103,6 +103,7 @@ class Miner(Node):
         self.max_block_size = 1
 
         self.tx_strategy = None
+        self.tx_per_iter = 0
 
         self.blockchain: Dict[str, Block] = dict()
         """A dictionary that stores block `Block` ids as keys and """
@@ -152,6 +153,12 @@ class Miner(Node):
         items = super().step(seconds)
         for item in items:
             self.consume(item)
+
+        # TODO
+        tx_count = math.ceil(np.random.normal(self.tx_per_iter, self.tx_per_iter / 10))
+        # print(tx_count)
+        for c in range(tx_count):
+            self.tx_strategy.generate(self)
 
         if random.random() <= self.mine_probability:
             self.generate_block()
