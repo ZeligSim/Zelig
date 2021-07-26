@@ -1,6 +1,6 @@
 import sys
 import heapq
-import numpy as np
+import random
 
 sys.path.append("..")
 
@@ -15,9 +15,9 @@ class TxStrategy:
         pass
 
     def generate(self, node: Miner) -> Transaction:
-        size = np.random.normal(509.23, 191.45)  # https://tradeblock.com/bitcoin/historical/1w-f-tsize_per_avg-01101
-        fee = np.random.normal(7.17E-5, 7.53E-5) # https://www.blockchain.com/btc/blocks?page=1
-        value = np.random.normal(1.1185684485714287, 2.2917997016339346) # same
+        size = random.gauss(509.23, 191.45)  # https://tradeblock.com/bitcoin/historical/1w-f-tsize_per_avg-01101
+        fee = random.gauss(7.17E-5, 7.53E-5)  # https://www.blockchain.com/btc/blocks?page=1
+        value = random.gauss(1.1185684485714287, 2.2917997016339346)  # same
         tx = Transaction(node.id, node.timestamp, size, value, fee)
         return tx
 
@@ -34,7 +34,7 @@ class TxStrategy:
         pass
 
 
-class NullTxStrategy(TxStrategy):
+class NoneTxStrategy(TxStrategy):
     def __init__(self):
         super().__init__()
 
@@ -45,8 +45,8 @@ class NullTxStrategy(TxStrategy):
         """
         Assign tx count and total size to block.
         """
-        block.tx_count = np.random.normal(2104.72, 236.63)
-        block.size = block.tx_count * np.random.normal(615.32, 89.43)
+        block.tx_count = random.gauss(2104.72, 236.63)
+        block.size = block.tx_count * random.gauss(615.32, 89.43)
         return block
 
 
@@ -81,7 +81,10 @@ class SimpleTxStrategy(TxStrategy):
         Remove transactions in the block from the shared mempool.
         """
         for tx in block.transactions:
-            self.mempool.remove(tx)
+            try:
+                node.mempool.remove(tx)
+            except ValueError:
+                pass
         heapq.heapify(self.mempool)
 
 

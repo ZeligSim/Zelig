@@ -7,8 +7,6 @@ import random
 import sys
 import heapq
 
-import numpy as np
-
 from typing import Dict
 
 sys.path.append("..")
@@ -155,8 +153,8 @@ class Miner(Node):
             self.consume(item)
 
         # TODO
-        tx_count = math.ceil(np.random.normal(self.tx_per_iter, self.tx_per_iter / 10))
-        # print(tx_count)
+        # tx_count = math.ceil(random.gauss(self.tx_per_iter, self.tx_per_iter / 10))
+        tx_count = self.tx_per_iter
         for c in range(tx_count):
             self.tx_strategy.generate(self)
 
