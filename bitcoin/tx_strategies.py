@@ -48,6 +48,41 @@ class NullTxStrategy(TxStrategy):
         return block
 
 
+class SimpleTxStrategy(TxStrategy):
+    def __init__(self):
+        """
+        Initialize shared mempool.
+        """
+        super().__init__()
+        self.mempool = []
+
+    def generate(self, node: Miner) -> Transaction:
+        """
+        Create transaction and add it to shared mempool.
+        """
+        tx = super().generate(node)
+        heapq.heappush(self.mempool, tx)
+
+    def fill_block(self, node: Miner, block: Block) -> Block:
+        """
+        Add txs to block from shared mempool until it reaches max size.
+        """
+        while block.size < node.max_block_size:
+            try:
+                block.add_tx(heapq.heappop(self.mempool))
+            except IndexError:
+                break
+        return block
+
+    def update_mempool(self, node: Miner, block: Block):
+        """
+        Remove transactions in the block from the shared mempool.
+        """
+        for tx in block.transactions:
+            self.mempool.remove(tx)
+        heapq.heapify(self.mempool)
+
+
 class FullTxStrategy(TxStrategy):
     def __init__(self):
         super().__init__()
@@ -84,7 +119,7 @@ class FullTxStrategy(TxStrategy):
         while block.size < miner.max_block_size:
             try:
                 block.add_tx(heapq.heappop(miner.mempool))
-            except:
+            except IndexError:
                 break
         return block
 
