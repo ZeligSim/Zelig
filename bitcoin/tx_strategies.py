@@ -15,7 +15,9 @@ class TxStrategy:
         pass
 
     def generate(self, node: Miner) -> Transaction:
-        size, value, fee = 5, 5, 5  # TODO
+        size = np.random.normal(509.23, 191.45)  # https://tradeblock.com/bitcoin/historical/1w-f-tsize_per_avg-01101
+        fee = np.random.normal(7.17E-5, 7.53E-5) # https://www.blockchain.com/btc/blocks?page=1
+        value = np.random.normal(1.1185684485714287, 2.2917997016339346) # same
         tx = Transaction(node.id, node.timestamp, size, value, fee)
         return tx
 
