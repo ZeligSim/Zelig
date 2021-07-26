@@ -28,6 +28,12 @@ block_int_iters: 6000
 # maximum block size in bytes
 max_block_size: 1000000 # 1 MB
 
+# Transaction modeling detail
+# Full:   transactions are propagated over the network; each node has its own mempool
+# Simple: nodes share mempool; no transaction propagation over the network
+# Null:   no transactions; blocks have tx count and size values sampled from distributions
+tx_modeling: Full
+
 # outgoing connections per node
 connections_per_node: 2
 

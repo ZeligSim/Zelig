@@ -227,7 +227,7 @@ class Miner(Node):
             pass
         self.stat_block_rcvs[block.id] = self.timestamp
         self.heads.append(block)
-        self.tx_strategy.udpate_mempool(self, block)
+        self.tx_strategy.update_mempool(self, block)
         self.publish_item(block, 'block')
 
     def publish_item(self, item: Item, item_type: str):

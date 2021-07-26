@@ -82,7 +82,10 @@ class FullTxStrategy(TxStrategy):
         Fill block until reaching max block size.
         """
         while block.size < miner.max_block_size:
-            block.add_tx(heapq.heappop(miner.mempool))
+            try:
+                block.add_tx(heapq.heappop(miner.mempool))
+            except:
+                break
         return block
 
     def update_mempool(self, node: Miner, block: Block):

@@ -12,6 +12,7 @@ from loguru import logger
 from bitcoin.models import Block, Miner
 from sim.base_models import Node
 from sim.util import Region
+from bitcoin.tx_strategies import *
 
 
 class Simulation:
@@ -23,7 +24,7 @@ class Simulation:
         self.sim_iters = 1
         self.iter_seconds = 0.1
         self.block_int_iters = 6000
-        self.max_block_size = 10**6
+        self.max_block_size = 10 ** 6
         self.connections_per_node = 2
         self.nodes_in_each_region = -1
         self.set_log_level(self.log_level)
@@ -65,12 +66,13 @@ class Simulation:
     def add_node(self, node: Node):
         self.nodes.append(node)
 
-    def __setup_mining(self):
+    def __setup_mining(self, tx_strategy):
         """Adds genesis block and setups mining probabilities for each node based on total mine power"""
         genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
         total_mine_power = sum([miner.mine_power for miner in self.nodes])
         difficulty = 1 / (self.block_int_iters * total_mine_power)
         for node in self.nodes:
+            node.tx_strategy = tx_strategy
             node.max_block_size = self.max_block_size
             node.set_difficulty(difficulty)
             node.add_block(genesis_block)
@@ -85,11 +87,14 @@ class Simulation:
             self.iter_seconds = config['iter_seconds']
             self.block_int_iters = config['block_int_iters']
             self.max_block_size = config['max_block_size']
+            self.tx_modeling = config['tx_modeling'] + 'TxStrategy'
             self.nodes_in_each_region = config['nodes_in_each_region']
             self.connections_per_node = config['connections_per_node']
             self.set_log_level(config['log_level'])
 
             if detailed:
+                TxStrategyClass = getattr(importlib.import_module('bitcoin.tx_strategies'), self.tx_modeling)
+                tx_strategy = TxStrategyClass()
                 logger.warning('Creating nodes...')
                 self.nodes = []
                 for node in config['nodes']:
@@ -100,7 +105,7 @@ class Simulation:
                         NodeClass = getattr(importlib.import_module('bitcoin.models'), node['type'])
                         self.nodes.append(
                             NodeClass(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds))
-                self.__setup_mining()
+                self.__setup_mining(tx_strategy)
 
                 logger.warning('Setting up random P2P network...')
                 for node in self.nodes:
@@ -120,7 +125,8 @@ class Simulation:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Blockchain simulator.")
-    parser.add_argument('-c', metavar='filename', default='config.yaml', help='Name of the YAML configuration file (default: config.yaml)')
+    parser.add_argument('-c', metavar='filename', default='config.yaml',
+                        help='Name of the YAML configuration file (default: config.yaml)')
     parser.add_argument('-s', metavar='seed', type=int, help='Seed for random number generation')
     args = parser.parse_args()
     config_name = args.c
