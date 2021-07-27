@@ -30,7 +30,7 @@ class HonestMining(NullMining):
         if prev is None:
             prev = self.choose_head(node)
         block = Block(node, prev.id, prev.height + 1)
-        block = node.tx_model.fill_block(self, block)
+        block = node.tx_model.fill_block(node, block)
         node.save_and_relay_block(block)
         logger.success(f'[{node.timestamp}] {node.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         return block
