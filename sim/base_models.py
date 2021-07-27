@@ -49,6 +49,7 @@ class Node:
         self.region = region
         self.iter_seconds = 0.1
 
+
         self.inbox: Dict[int, List[Packet]] = dict()
         """Node's inbox with simulation timestamps as keys and lists of `Item`s to be consumed at that timestamp as values."""
 

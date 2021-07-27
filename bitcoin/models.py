@@ -123,13 +123,13 @@ class Miner(Node):
         """Return state values to be pickled."""
         state = self.__dict__.copy()
         # Remove the unpicklable entries.
-        del state['mine_power']
         del state['ins']
         del state['outs']
         del state['inbox']
-        del state['difficulty']
-        del state['mine_probability']
         del state['timestamp']
+        del state['mempool']
+        del state['tx_model']
+        del state['mine_strategy']
         return state
 
     def __setstate__(self, state):
@@ -223,7 +223,7 @@ class Miner(Node):
             self.send_to(node, msg)
 
     def log_blockchain(self):
-        head = self.choose_prev_block()
+        head = self.mine_strategy.choose_head()
         logger.warning(f'{self.name}')
         logger.warning(f'\tBLOCKCHAIN:')
         for block in self.blockchain.values():
