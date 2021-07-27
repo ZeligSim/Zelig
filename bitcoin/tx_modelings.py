@@ -57,6 +57,7 @@ class SimpleTxModel(TxModel):
         """
         super().__init__()
         self.mempool = []
+        self.updated_blocks = dict()
 
     def generate(self, node: Miner) -> Transaction:
         """
@@ -78,14 +79,15 @@ class SimpleTxModel(TxModel):
 
     def update_mempool(self, node: Miner, block: Block):
         """
-        Remove transactions in the block from the shared mempool.
+        **No need to update since added tx are removed from mempool when mining.**
         """
-        for tx in block.transactions:
-            try:
-                node.mempool.remove(tx)
-            except ValueError:
-                pass
-        heapq.heapify(self.mempool)
+        # if not self.updated_blocks.get(block.id, False):
+        #     for tx in block.transactions:
+        #         self.mempool.remove(tx)
+        #         heapq.heapify(self.mempool)
+        #     self.updated_blocks[block.id] = True
+        # self.mempool = sorted(self.mempool, reverse=True)
+        pass
 
 
 class FullTxModel(TxModel):

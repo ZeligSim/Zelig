@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Callable
 
 import yaml
+import time
 from loguru import logger
 
 from bitcoin.models import Block, Miner
@@ -33,7 +34,7 @@ class Simulation:
         self.nodes = []
         self.connection_predicate: Callable[[Node, Node], bool] = None
 
-    def run(self):
+    def run(self, report_time=False):
         if self.config_file is not None:
             self.__load_config_file(detailed=False)
 
@@ -52,10 +53,17 @@ class Simulation:
                             n2.connect(n1)
                 self.__setup_mining()
 
+            start_time = time.time()
             sim_name = f'{self.name}_{rep}'
             for i in range(1, self.sim_iters):
                 [node.step(iter_seconds) for node in self.nodes]
+            end_time = time.time()
 
+            if report_time:
+                print(f'Total simulation time (s):\t{end_time - start_time}')
+                print(f'Average time per step (s):\t{(end_time - start_time) / self.sim_iters}')
+
+            logger.warning('Finished simulation. Saving nodes...')
             Path(f'{self.results_dir}/{sim_name}').mkdir(parents=True, exist_ok=True)
             for node in self.nodes:
                 with open(f'{self.results_dir}/{sim_name}/{node.name}', 'wb+') as f:
@@ -140,4 +148,4 @@ if __name__ == "__main__":
     if seed is not None:
         random.seed(seed)
     sim = Simulation(config_name)
-    sim.run()
+    sim.run(report_time=True)

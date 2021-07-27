@@ -2,10 +2,8 @@
 Main implementation of the Bitcoin simulator.
 """
 
-import math
 import random
 import sys
-import heapq
 
 from typing import Dict
 
@@ -15,7 +13,6 @@ from loguru import logger
 
 from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
-from sim.network_util import get_delay
 
 
 class Block(Item):
