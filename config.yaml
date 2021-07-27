@@ -3,7 +3,7 @@ sim_name: dev
 
 # path of the directory the nodes will be saved under the simulation name
 # don't leave '/' at the end
-results_directory: /Users/egeerdogan/desktop/Simbadt/dumps
+results_directory: /Users/egeerdogan/desktop/projects/zelig/dumps
 
 # simulation events logging level
 #   CRITICAL: none

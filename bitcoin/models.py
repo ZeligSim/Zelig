@@ -161,15 +161,6 @@ class Miner(Node):
         if random.random() <= self.mine_probability:
             self.generate_block()
 
-    def connect(self, *argv):
-        """
-        Establish an outgoing connection to one or more nodes.
-        * argv (`sim.base_models.Node`+): Node(s) to establish connections with.
-        """
-        for node in argv:
-            self.outs[node.id] = node
-            node.ins[self.id] = self
-
     def set_difficulty(self, difficulty: float):
         """
         Set mining difficulty to the given value. Mining difficulty is the probability of finding a block in one step with a mining power of 1.
@@ -244,22 +235,6 @@ class Miner(Node):
         msg = InvMessage(item.id, item_type, self.id)
         for node in self.outs.values():
             self.send_to(node, msg)
-
-    def send_to(self, node: Node, item: Item):
-        """
-        Send an item to a specific node. Can be used to respond to messages.
-        * node (`sim.base_models.Node`): Target node.
-        * item (`sim.base_models.Item`): Item to send.
-        """
-        packet = Packet(item)
-        delay = get_delay(self.region, node.region, item.size) / self.iter_seconds
-        reveal_time = math.ceil(max(self.timestamp, self.last_reveal_times.get(node.id, 0)) + delay)
-        self.last_reveal_times[node.id] = reveal_time
-        packet.reveal_at = reveal_time
-        try:
-            node.inbox[packet.reveal_at].append(packet)
-        except KeyError:
-            node.inbox[packet.reveal_at] = [packet]
 
     def choose_prev_block(self) -> Block:
         """

@@ -10,7 +10,7 @@ from bitcoin.messages import InvMessage
 from loguru import logger
 
 
-class TxStrategy:
+class TxModel:
     def __init__(self):
         pass
 
@@ -34,7 +34,7 @@ class TxStrategy:
         pass
 
 
-class NoneTxStrategy(TxStrategy):
+class NoneTxModel(TxModel):
     def __init__(self):
         super().__init__()
 
@@ -50,7 +50,7 @@ class NoneTxStrategy(TxStrategy):
         return block
 
 
-class SimpleTxStrategy(TxStrategy):
+class SimpleTxModel(TxModel):
     def __init__(self):
         """
         Initialize shared mempool.
@@ -88,7 +88,7 @@ class SimpleTxStrategy(TxStrategy):
         heapq.heapify(self.mempool)
 
 
-class FullTxStrategy(TxStrategy):
+class FullTxModel(TxModel):
     def __init__(self):
         super().__init__()
 

@@ -12,7 +12,7 @@ from loguru import logger
 from bitcoin.models import Block, Miner
 from sim.base_models import Node
 from sim.util import Region
-from bitcoin.tx_strategies import *
+from bitcoin.tx_modelings import *
 
 
 class Simulation:
@@ -89,13 +89,13 @@ class Simulation:
             self.tx_per_node_per_iter = config['tx_per_node_per_iter']
             self.block_int_iters = config['block_int_iters']
             self.max_block_size = config['max_block_size']
-            self.tx_modeling = config['tx_modeling'] + 'TxStrategy'
+            self.tx_modeling = config['tx_modeling'] + 'TxModel'
             self.nodes_in_each_region = config['nodes_in_each_region']
             self.connections_per_node = config['connections_per_node']
             self.set_log_level(config['log_level'])
 
             if detailed:
-                TxStrategyClass = getattr(importlib.import_module('bitcoin.tx_strategies'), self.tx_modeling)
+                TxStrategyClass = getattr(importlib.import_module('bitcoin.tx_modelings'), self.tx_modeling)
                 tx_strategy = TxStrategyClass()
                 logger.warning('Creating nodes...')
                 self.nodes = []
