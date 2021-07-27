@@ -52,45 +52,45 @@ nodes:
   - count: 189
     region: CH
     region_mine_power: 70.74
-    type: Miner
+    mining_strategy: Honest
 
   - count: 1892
     region: US
     region_mine_power: 7.87
-    type: Miner
+    mining_strategy: Honest
 
   - count: 251
     region: RU
     region_mine_power: 7.50
-    type: Miner
+    mining_strategy: Honest
 
   - count: 5
     region: KZ
     region_mine_power: 6.71
-    type: Miner
+    mining_strategy: Honest
 
   - count: 19
     region: ML
     region_mine_power: 4.71
-    type: Miner
+    mining_strategy: Honest
 
   - count: 316
     region: CN
     region_mine_power: 0.89
-    type: Miner
+    mining_strategy: Honest
 
   - count: 1769
     region: GE
     region_mine_power: 0.61
-    type: Miner
+    mining_strategy: Honest
 
   - count: 32
     region: NR
     region_mine_power: 0.52
-    type: Miner
+    mining_strategy: Honest
 
   - count: 2
     region: VN
     region_mine_power: 0.46
-    type: Miner
+    mining_strategy: Honest
 

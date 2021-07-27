@@ -97,11 +97,13 @@ class Miner(Node):
         self.iter_seconds = iter_seconds
         self.max_block_size = 1
 
-        self.tx_strategy = None
+        self.tx_model = None
         self.tx_per_iter = 0
 
+        self.mine_strategy = None
+
         self.blockchain: Dict[str, Block] = dict()
-        """A dictionary that stores block `Block` ids as keys and """
+        """A dictionary that stores `Block` ids as keys and `Block`s as values."""
 
         self.mempool: List[Transaction] = []  # heapq
         self.tx_ids: Dict[str, Transaction] = dict()
@@ -153,10 +155,10 @@ class Miner(Node):
         # tx_count = math.ceil(random.gauss(self.tx_per_iter, self.tx_per_iter / 10))
         tx_count = self.tx_per_iter
         for c in range(tx_count):
-            self.tx_strategy.generate(self)
+            self.tx_model.generate(self)
 
         if random.random() <= self.mine_probability:
-            self.generate_block()
+            self.mine_strategy.mine_block(self)
 
     def set_difficulty(self, difficulty: float):
         """
@@ -173,9 +175,9 @@ class Miner(Node):
         """
         if type(item) == Block:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
-            self.add_block(item)
+            self.save_and_relay_block(item)
         elif type(item) == Transaction:
-            self.tx_strategy.receive(self, item)
+            self.tx_model.receive(self, item)
         elif type(item) == InvMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
@@ -195,20 +197,7 @@ class Miner(Node):
             elif item.type == 'tx':
                 self.send_to(self.outs[item.sender_id], self.tx_ids[item.item_id])
 
-    def generate_block(self, prev: Block = None) -> Block:
-        """
-        Generates and returns a Block.
-        * prev (`Block`): Block to build upon. If not provided, the block is chosen according to the protocol.
-        """
-        if prev is None:
-            prev = self.choose_prev_block()
-        block = Block(self, prev.id, prev.height + 1)
-        block = self.tx_strategy.fill_block(self, block)
-        self.add_block(block)
-        logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
-        return block
-
-    def add_block(self, block: Block):
+    def save_and_relay_block(self, block: Block):
         """
         Removes the given block from `heads` if it exists and adds it to the `blockchain`.
         * block (`Block`): Block to add to the blockchain.
@@ -220,7 +209,7 @@ class Miner(Node):
             pass
         self.stat_block_rcvs[block.id] = self.timestamp
         self.heads.append(block)
-        self.tx_strategy.update_mempool(self, block)
+        self.tx_model.update_mempool(self, block)
         self.publish_item(block, 'block')
 
     def publish_item(self, item: Item, item_type: str):
@@ -232,13 +221,6 @@ class Miner(Node):
         msg = InvMessage(item.id, item_type, self.id)
         for node in self.outs.values():
             self.send_to(node, msg)
-
-    def choose_prev_block(self) -> Block:
-        """
-        Returns the head of the longest chain.
-        """
-        heights = [block.height for block in self.heads if block != 'placeholder']
-        return self.heads[heights.index(max(heights))]
 
     def log_blockchain(self):
         head = self.choose_prev_block()

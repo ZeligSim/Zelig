@@ -14,6 +14,7 @@ from bitcoin.models import Block, Miner
 from sim.base_models import Node
 from sim.util import Region
 from bitcoin.tx_modelings import *
+from bitcoin.mining_strategies import *
 
 
 class Simulation:
@@ -74,17 +75,14 @@ class Simulation:
     def add_node(self, node: Node):
         self.nodes.append(node)
 
-    def __setup_mining(self, tx_strategy):
+    def __setup_mining(self):
         """Adds genesis block and setups mining probabilities for each node based on total mine power"""
         genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
         total_mine_power = sum([miner.mine_power for miner in self.nodes])
         difficulty = 1 / (self.block_int_iters * total_mine_power)
         for node in self.nodes:
-            node.tx_strategy = tx_strategy
-            node.tx_per_iter = self.tx_per_node_per_iter
-            node.max_block_size = self.max_block_size
             node.set_difficulty(difficulty)
-            node.add_block(genesis_block)
+            node.save_and_relay_block(genesis_block)
 
     def __load_config_file(self, detailed=False):
         with open(self.config_file, 'r') as f:
@@ -103,8 +101,9 @@ class Simulation:
             self.set_log_level(config['log_level'])
 
             if detailed:
-                TxStrategyClass = getattr(importlib.import_module('bitcoin.tx_modelings'), self.tx_modeling)
-                tx_strategy = TxStrategyClass()
+                TxModelClass = getattr(importlib.import_module('bitcoin.tx_modelings'), self.tx_modeling)
+                tx_modeling = TxModelClass()
+                mine_strategy = HonestMining()
                 logger.warning('Creating nodes...')
                 self.nodes = []
                 for node in config['nodes']:
@@ -112,10 +111,13 @@ class Simulation:
                     mine_power = node['region_mine_power'] / num_nodes
                     region = node['region']
                     for idx in range(num_nodes):
-                        NodeClass = getattr(importlib.import_module('bitcoin.models'), node['type'])
-                        self.nodes.append(
-                            NodeClass(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds))
-                self.__setup_mining(tx_strategy)
+                        node = Miner(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds)
+                        node.tx_model = tx_modeling
+                        node.mine_strategy = mine_strategy
+                        node.tx_per_iter = self.tx_per_node_per_iter
+                        node.max_block_size = self.max_block_size
+                        self.nodes.append(node)
+                self.__setup_mining()
 
                 logger.warning('Setting up random P2P network...')
                 for node in self.nodes:
