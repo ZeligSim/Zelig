@@ -2,7 +2,6 @@
 Main implementation of the Bitcoin simulator.
 """
 
-import random
 import sys
 
 from typing import Dict
@@ -35,6 +34,7 @@ class Block(Item):
         self.size = 80  # size of block header in bytes
         self.tx_count = 0
         self.transactions = []
+        self.reward: Reward = None
 
     def add_tx(self, tx):
         self.transactions.append(tx)
@@ -95,14 +95,14 @@ class Miner(Node):
         self.mine_power = mine_power
         self.iter_seconds = iter_seconds
         self.max_block_size = 1
-
-        self.tx_model = None
         self.tx_per_iter = 0
 
+        # --- MODULES ---
+        self.tx_model = None
         self.mine_strategy = None
-
         self.consensus_oracle: Oracle = None
 
+        # --- PROTOCOL DATA STRUCTURES ---
         self.blockchain: Dict[str, Block] = dict()
         """A dictionary that stores `Block` ids as keys and `Block`s as values."""
 
@@ -112,6 +112,7 @@ class Miner(Node):
         self.heads: List[Block] = []
         """Stores the current head blocks (blocks that hasn't been mined on) as a list."""
 
+        # --- BOOKKEEPING ---
         self.stat_block_rcvs: Dict[str, int] = dict()
         """Stores the receipt time of blocks, to calculate metrics such as block propagation times."""
 

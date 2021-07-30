@@ -3,6 +3,13 @@ from typing import List
 import random
 
 
+class Reward:
+    def __init__(self, node: Node,  value: int):
+        self.value = value
+        self.timestamp = node.timestamp
+        self.node = node
+
+
 class Oracle:
     def __init__(self, nodes: List[Node], block_interval: int):
         self.block_interval = block_interval
@@ -11,12 +18,16 @@ class Oracle:
     def can_mine(self, miner: Node, *blocks) -> bool:
         pass
 
+    def get_reward(self, miner: Node) -> Reward:
+        pass
+
 
 class PoWOracle(Oracle):
-    def __init__(self, nodes: List[Node], block_interval: int, dynamic=False):
+    def __init__(self, nodes: List[Node], block_interval: int, block_reward: int, dynamic=False):
         super().__init__(nodes, block_interval)
         self.dynamic = dynamic
         self.total_power = self.compute_total_power()
+        self.block_reward = block_reward
 
         self.timestamp = 0
         self.new_total_mine_power = 0
@@ -37,3 +48,8 @@ class PoWOracle(Oracle):
 
     def compute_total_power(self) -> float:
         return sum([node.mine_power for node in self.nodes])
+
+    def get_reward(self, miner: Node) -> Reward:
+        return Reward(miner, self.block_reward)
+
+

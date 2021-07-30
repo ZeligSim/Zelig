@@ -32,6 +32,7 @@ class Simulation:
         self.set_log_level(self.log_level)
         self.config_file = config_file
         self.dynamic = False
+        self.block_reward = 100
 
         self.nodes = []
         self.connection_predicate: Callable[[Node, Node], bool] = None
@@ -78,7 +79,7 @@ class Simulation:
 
     def __setup_mining(self):
         """Adds genesis block and sets up nodes' consensus oracles"""
-        pow_oracle = PoWOracle(self.nodes, self.block_int_iters)
+        pow_oracle = PoWOracle(self.nodes, self.block_int_iters, self.block_reward)
         genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
         for node in self.nodes:
             node.consensus_oracle = pow_oracle
@@ -99,6 +100,7 @@ class Simulation:
             self.nodes_in_each_region = config['nodes_in_each_region']
             self.connections_per_node = config['connections_per_node']
             self.dynamic = config['dynamic_difficulty']
+            self.block_reward = config['block_reward']
             self.set_log_level(config['log_level'])
 
             if detailed:

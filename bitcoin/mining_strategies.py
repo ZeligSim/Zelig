@@ -1,6 +1,7 @@
 from loguru import logger
 
 from bitcoin.models import Miner, Block
+from bitcoin.consensus import Reward
 
 
 class NullMining:
@@ -31,6 +32,7 @@ class HonestMining(NullMining):
             prev = self.choose_head(node)
         block = Block(node, prev.id, prev.height + 1)
         block = node.tx_model.fill_block(node, block)
+        block.reward = node.consensus_oracle.get_reward(node)
         node.save_block(block, relay=True)
         logger.success(f'[{node.timestamp}] {node.name} GENERATED BLOCK {block.id} ==> {prev.id}')
         return block
