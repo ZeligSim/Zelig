@@ -36,7 +36,6 @@ def speed(src: Region, dest: Region) -> float:
         min(src_upload, dest_download).
     * a (`sim.util.Region`): Source region.
     * b (`sim.util.Region`): Destination region.
-    :return:
     """
     return min(SPEED[src]['up'], SPEED[dest]['down'])
 

@@ -1,17 +1,18 @@
 import importlib
 import pickle
-import random
-import sys
 import argparse
 from pathlib import Path
 from typing import Callable
 
 import yaml
+import time
 from loguru import logger
 
 from bitcoin.models import Block, Miner
 from sim.base_models import Node
 from sim.util import Region
+from bitcoin.tx_modelings import *
+from bitcoin.mining_strategies import *
 
 
 class Simulation:
@@ -23,6 +24,7 @@ class Simulation:
         self.sim_iters = 1
         self.iter_seconds = 0.1
         self.block_int_iters = 6000
+        self.max_block_size = 10 ** 6
         self.connections_per_node = 2
         self.nodes_in_each_region = -1
         self.set_log_level(self.log_level)
@@ -31,7 +33,7 @@ class Simulation:
         self.nodes = []
         self.connection_predicate: Callable[[Node, Node], bool] = None
 
-    def run(self):
+    def run(self, report_time=False):
         if self.config_file is not None:
             self.__load_config_file(detailed=False)
 
@@ -50,10 +52,17 @@ class Simulation:
                             n2.connect(n1)
                 self.__setup_mining()
 
+            start_time = time.time()
             sim_name = f'{self.name}_{rep}'
             for i in range(1, self.sim_iters):
                 [node.step(iter_seconds) for node in self.nodes]
+            end_time = time.time()
 
+            if report_time:
+                print(f'Total simulation time (s):\t{end_time - start_time}')
+                print(f'Average time per step (s):\t{(end_time - start_time) / self.sim_iters}')
+
+            logger.warning('Finished simulation. Saving nodes...')
             Path(f'{self.results_dir}/{sim_name}').mkdir(parents=True, exist_ok=True)
             for node in self.nodes:
                 with open(f'{self.results_dir}/{sim_name}/{node.name}', 'wb+') as f:
@@ -71,7 +80,7 @@ class Simulation:
         difficulty = 1 / (self.block_int_iters * total_mine_power)
         for node in self.nodes:
             node.set_difficulty(difficulty)
-            node.add_block(genesis_block)
+            node.save_and_relay_block(genesis_block)
 
     def __load_config_file(self, detailed=False):
         with open(self.config_file, 'r') as f:
@@ -81,12 +90,18 @@ class Simulation:
             self.sim_reps = config['sim_reps']
             self.sim_iters = config['sim_iters']
             self.iter_seconds = config['iter_seconds']
+            self.tx_per_node_per_iter = config['tx_per_node_per_iter']
             self.block_int_iters = config['block_int_iters']
+            self.max_block_size = config['max_block_size']
+            self.tx_modeling = config['tx_modeling'] + 'TxModel'
             self.nodes_in_each_region = config['nodes_in_each_region']
             self.connections_per_node = config['connections_per_node']
             self.set_log_level(config['log_level'])
 
             if detailed:
+                TxModelClass = getattr(importlib.import_module('bitcoin.tx_modelings'), self.tx_modeling)
+                tx_modeling = TxModelClass()
+                mine_strategy = HonestMining()
                 logger.warning('Creating nodes...')
                 self.nodes = []
                 for node in config['nodes']:
@@ -94,9 +109,12 @@ class Simulation:
                     mine_power = node['region_mine_power'] / num_nodes
                     region = node['region']
                     for idx in range(num_nodes):
-                        NodeClass = getattr(importlib.import_module('bitcoin.models'), node['type'])
-                        self.nodes.append(
-                            NodeClass(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds))
+                        node = Miner(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds)
+                        node.tx_model = tx_modeling
+                        node.mine_strategy = mine_strategy
+                        node.tx_per_iter = self.tx_per_node_per_iter
+                        node.max_block_size = self.max_block_size
+                        self.nodes.append(node)
                 self.__setup_mining()
 
                 logger.warning('Setting up random P2P network...')
@@ -117,7 +135,8 @@ class Simulation:
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Blockchain simulator.")
-    parser.add_argument('-c', metavar='filename', default='config.yaml', help='Name of the YAML configuration file (default: config.yaml)')
+    parser.add_argument('-c', metavar='filename', default='config.yaml',
+                        help='Name of the YAML configuration file (default: config.yaml)')
     parser.add_argument('-s', metavar='seed', type=int, help='Seed for random number generation')
     args = parser.parse_args()
     config_name = args.c
@@ -129,4 +148,4 @@ if __name__ == "__main__":
     if seed is not None:
         random.seed(seed)
     sim = Simulation(config_name)
-    sim.run()
+    sim.run(report_time=True)

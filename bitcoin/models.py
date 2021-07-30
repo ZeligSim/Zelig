@@ -2,10 +2,8 @@
 Main implementation of the Bitcoin simulator.
 """
 
-import math
 import random
 import sys
-import numpy as np
 
 from typing import Dict
 
@@ -15,7 +13,6 @@ from loguru import logger
 
 from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
-from sim.network_util import get_delay
 
 
 class Block(Item):
@@ -34,8 +31,17 @@ class Block(Item):
         self.miner = miner.name
         self.created_at = miner.timestamp
         self.height = height
-        self.tx_count = np.random.normal(2104.72, 236.63)
-        self.size = self.tx_count * np.random.normal(615.32, 89.43)
+        self.size = 80  # size of block header in bytes
+        self.tx_count = 0
+        self.transactions = []
+
+    def add_tx(self, tx):
+        self.transactions.append(tx)
+        self.size += tx.size
+        self.tx_count += 1
+
+    def has_tx(self, tx):
+        return tx in self.transactions
 
     def __getstate__(self):
         state = self.__dict__.copy()
@@ -50,11 +56,24 @@ class Block(Item):
         return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
 
 
-# class Transaction(Item):
-#     def __init__(self, fee: int, sender_id: str):
-#         super().__init__(sender_id, 0)
-#         self.fee = fee
-#         self.size = 400  # bytes TODO
+class Transaction(Item):
+    def __init__(self, sender_id: str, created_at: int, size: float, value: float, fee: float):
+        super().__init__(sender_id, 0)
+        self.fee = 0
+        self.size = 400  # bytes
+        self.value = 100
+        self.created_at = created_at
+        self.feerate = self.fee / self.size
+
+    def __str__(self) -> str:
+        return f'TX (id:{self.id}, value: {self.value}, feerate: {self.feerate})'
+
+    def __lt__(self, other):
+        """
+        Compare this Transaction object with another on the basis of their feerates.
+        We want the mempool heap to treat the highest feerate as the "minimum" element, so the comparison operator is <=.
+        """
+        return self.feerate >= other.feerate
 
 
 class Miner(Node):
@@ -76,28 +95,41 @@ class Miner(Node):
         self.difficulty = 0
         self.mine_probability = 0
         self.iter_seconds = iter_seconds
+        self.max_block_size = 1
+
+        self.tx_model = None
+        self.tx_per_iter = 0
+
+        self.mine_strategy = None
 
         self.blockchain: Dict[str, Block] = dict()
-        """A dictionary that stores block `Block` ids as keys and """
+        """A dictionary that stores `Block` ids as keys and `Block`s as values."""
+
+        self.mempool: List[Transaction] = []  # heapq
+        self.tx_ids: Dict[str, Transaction] = dict()
 
         self.heads: List[Block] = []
         """Stores the current head blocks (blocks that hasn't been mined on) as a list."""
 
         self.stat_block_rcvs: Dict[str, int] = dict()
         """Stores the receipt time of blocks, to calculate metrics such as block propagation times."""
+
+        self.stat_tx_rcvs: Dict[str, int] = dict()
+        """Stores the receipt time of transactions, for analysis."""
+
         logger.info(f'CREATED MINER {self.name}')
 
     def __getstate__(self):
         """Return state values to be pickled."""
         state = self.__dict__.copy()
         # Remove the unpicklable entries.
-        del state['mine_power']
         del state['ins']
         del state['outs']
         del state['inbox']
-        del state['difficulty']
-        del state['mine_probability']
         del state['timestamp']
+        del state['mempool']
+        del state['tx_model']
+        del state['mine_strategy']
         return state
 
     def __setstate__(self, state):
@@ -119,17 +151,14 @@ class Miner(Node):
         for item in items:
             self.consume(item)
 
-        if random.random() <= self.mine_probability:
-            self.generate_block()
+        # TODO
+        # tx_count = math.ceil(random.gauss(self.tx_per_iter, self.tx_per_iter / 10))
+        tx_count = self.tx_per_iter
+        for c in range(tx_count):
+            self.tx_model.generate(self)
 
-    def connect(self, *argv):
-        """
-        Establish an outgoing connection to one or more nodes.
-        * argv (`sim.base_models.Node`+): Node(s) to establish connections with.
-        """
-        for node in argv:
-            self.outs[node.id] = node
-            node.ins[self.id] = self
+        if random.random() <= self.mine_probability:
+            self.mine_strategy.mine_block(self)
 
     def set_difficulty(self, difficulty: float):
         """
@@ -146,13 +175,9 @@ class Miner(Node):
         """
         if type(item) == Block:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
-            self.stat_block_rcvs[item.id] = self.timestamp
-            self.add_block(item)
-            self.publish_item(item, 'block')
-        # elif type(item) == Transaction:
-        #     logger.debug(f'[{self.timestamp}] {self.name} RECEIVED TX {item.id}')
-        #     self.txpool[item.id] = item
-        #     self.publish_item(item, 'tx')
+            self.save_and_relay_block(item)
+        elif type(item) == Transaction:
+            self.tx_model.receive(self, item)
         elif type(item) == InvMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED INV MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
@@ -160,34 +185,19 @@ class Miner(Node):
                     logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
                     self.blockchain[item.item_id] = 'placeholder'  # not none
                     self.send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id))
-            # elif msg.type == 'tx':
-            #     if self.txpool.get(msg.item_id, None) is None:
-            #         logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
-            #         self.txpool[msg.item_id] = 'placeholder'  # not none
-            #         getdata = GetDataMessage(msg.item_id, msg.type, self.id, self.timestamp, 10, self.timestamp)
-            #         self.__send_to(msg.sender_id, getdata)
+            elif item.type == 'tx':
+                if self.tx_ids.get(item.item_id, None) is None:
+                    logger.debug(f'[{self.timestamp}] {self.name} RESPONDED WITH GETDATA')
+                    self.tx_ids[item.item_id] = True
+                    self.send_to(self.outs[item.sender_id], GetDataMessage(item.item_id, item.type, self.id))
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
                 self.send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
-            # elif msg.type == 'tx':
-            #     self.__send_to(msg.sender_id, self.txpool[msg.item_id])
+            elif item.type == 'tx':
+                self.send_to(self.outs[item.sender_id], self.tx_ids[item.item_id])
 
-    def generate_block(self, prev: Block = None) -> Block:
-        """
-        Generates and returns a Block.
-        * prev (`Block`): Block to build upon. If not provided, the block is chosen according to the protocol.
-        """
-        if prev is None:
-            prev = self.choose_prev_block()
-        block = Block(self, prev.id, prev.height + 1)
-        logger.success(f'[{self.timestamp}] {self.name} GENERATED BLOCK {block.id} ==> {prev.id}')
-        self.add_block(block)
-        self.stat_block_rcvs[block.id] = self.timestamp
-        self.publish_item(block, 'block')
-        return block
-
-    def add_block(self, block: Block):
+    def save_and_relay_block(self, block: Block):
         """
         Removes the given block from `heads` if it exists and adds it to the `blockchain`.
         * block (`Block`): Block to add to the blockchain.
@@ -197,14 +207,10 @@ class Miner(Node):
             self.heads.remove(self.blockchain[block.prev_id])
         except (ValueError, KeyError):
             pass
+        self.stat_block_rcvs[block.id] = self.timestamp
         self.heads.append(block)
-
-    # def generate_transaction(self) -> Transaction:
-    #     fee = 10
-    #     tx = Transaction(fee, self.id, self.timestamp)
-    #     self.txpool[tx.id] = tx
-    #     self.publish_item(tx, 'tx')
-    #     return tx
+        self.tx_model.update_mempool(self, block)
+        self.publish_item(block, 'block')
 
     def publish_item(self, item: Item, item_type: str):
         """
@@ -216,31 +222,8 @@ class Miner(Node):
         for node in self.outs.values():
             self.send_to(node, msg)
 
-    def send_to(self, node: Node, item: Item):
-        """
-        Send an item to a specific node. Can be used to respond to messages.
-        * node (`sim.base_models.Node`): Target node.
-        * item (`sim.base_models.Item`): Item to send.
-        """
-        packet = Packet(item)
-        delay = get_delay(self.region, node.region, item.size) / self.iter_seconds
-        reveal_time = math.ceil(max(self.timestamp, self.last_reveal_times.get(node.id, 0)) + delay)
-        self.last_reveal_times[node.id] = reveal_time
-        packet.reveal_at = reveal_time
-        try:
-            node.inbox[packet.reveal_at].append(packet)
-        except KeyError:
-            node.inbox[packet.reveal_at] = [packet]
-
-    def choose_prev_block(self) -> Block:
-        """
-        Returns the head of the longest chain.
-        """
-        heights = [block.height for block in self.heads if block != 'placeholder']
-        return self.heads[heights.index(max(heights))]
-
     def log_blockchain(self):
-        head = self.choose_prev_block()
+        head = self.mine_strategy.choose_head()
         logger.warning(f'{self.name}')
         logger.warning(f'\tBLOCKCHAIN:')
         for block in self.blockchain.values():
