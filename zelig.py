@@ -6,6 +6,7 @@ from typing import Callable
 
 import yaml
 import time
+import random
 from loguru import logger
 
 from bitcoin.models import Block, Miner
@@ -13,6 +14,7 @@ from sim.base_models import Node
 from sim.util import Region
 from bitcoin.tx_modelings import *
 from bitcoin.mining_strategies import *
+from bitcoin.consensus import *
 
 
 class Simulation:
@@ -74,13 +76,12 @@ class Simulation:
         self.nodes.append(node)
 
     def __setup_mining(self):
-        """Adds genesis block and setups mining probabilities for each node based on total mine power"""
+        """Adds genesis block and sets up nodes' consensus oracles"""
+        pow_oracle = PoWOracle(self.nodes, self.block_int_iters)
         genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
-        total_mine_power = sum([miner.mine_power for miner in self.nodes])
-        difficulty = 1 / (self.block_int_iters * total_mine_power)
         for node in self.nodes:
-            node.set_difficulty(difficulty)
-            node.save_and_relay_block(genesis_block)
+            node.consensus_oracle = pow_oracle
+            node.save_block(genesis_block)
 
     def __load_config_file(self, detailed=False):
         with open(self.config_file, 'r') as f:

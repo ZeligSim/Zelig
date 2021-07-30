@@ -13,6 +13,7 @@ from loguru import logger
 
 from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
+from bitcoin.consensus import *
 
 
 class Block(Item):
@@ -92,8 +93,6 @@ class Miner(Node):
         super().__init__(region, timestamp)
         self.name = name
         self.mine_power = mine_power
-        self.difficulty = 0
-        self.mine_probability = 0
         self.iter_seconds = iter_seconds
         self.max_block_size = 1
 
@@ -101,6 +100,8 @@ class Miner(Node):
         self.tx_per_iter = 0
 
         self.mine_strategy = None
+
+        self.consensus_oracle: Oracle = None
 
         self.blockchain: Dict[str, Block] = dict()
         """A dictionary that stores `Block` ids as keys and `Block`s as values."""
@@ -144,6 +145,8 @@ class Miner(Node):
         super().reset()
         self.blockchain = dict()
         self.heads = []
+        self.mempool = []
+        self.tx_ids = dict()
         self.stat_block_rcvs = dict()
 
     def step(self, seconds: float):
@@ -157,16 +160,8 @@ class Miner(Node):
         for c in range(tx_count):
             self.tx_model.generate(self)
 
-        if random.random() <= self.mine_probability:
+        if self.consensus_oracle.can_mine(self):
             self.mine_strategy.mine_block(self)
-
-    def set_difficulty(self, difficulty: float):
-        """
-        Set mining difficulty to the given value. Mining difficulty is the probability of finding a block in one step with a mining power of 1.
-        * difficulty (float): new difficulty value.
-        """
-        self.difficulty = difficulty
-        self.mine_probability = self.mine_power * self.difficulty
 
     def consume(self, item: Item):
         """
@@ -175,7 +170,7 @@ class Miner(Node):
         """
         if type(item) == Block:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
-            self.save_and_relay_block(item)
+            self.save_block(item, relay=True)
         elif type(item) == Transaction:
             self.tx_model.receive(self, item)
         elif type(item) == InvMessage:
@@ -197,7 +192,7 @@ class Miner(Node):
             elif item.type == 'tx':
                 self.send_to(self.outs[item.sender_id], self.tx_ids[item.item_id])
 
-    def save_and_relay_block(self, block: Block):
+    def save_block(self, block: Block, relay=False):
         """
         Removes the given block from `heads` if it exists and adds it to the `blockchain`.
         * block (`Block`): Block to add to the blockchain.
@@ -210,7 +205,8 @@ class Miner(Node):
         self.stat_block_rcvs[block.id] = self.timestamp
         self.heads.append(block)
         self.tx_model.update_mempool(self, block)
-        self.publish_item(block, 'block')
+        if relay:
+            self.publish_item(block, 'block')
 
     def publish_item(self, item: Item, item_type: str):
         """
