@@ -31,6 +31,7 @@ class Simulation:
         self.nodes_in_each_region = -1
         self.set_log_level(self.log_level)
         self.config_file = config_file
+        self.dynamic = False
 
         self.nodes = []
         self.connection_predicate: Callable[[Node, Node], bool] = None
@@ -97,6 +98,7 @@ class Simulation:
             self.tx_modeling = config['tx_modeling'] + 'TxModel'
             self.nodes_in_each_region = config['nodes_in_each_region']
             self.connections_per_node = config['connections_per_node']
+            self.dynamic = config['dynamic_difficulty']
             self.set_log_level(config['log_level'])
 
             if detailed:

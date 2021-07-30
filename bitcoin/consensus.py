@@ -2,6 +2,7 @@ from sim.base_models import Node, Item
 from typing import List
 import random
 
+
 class Oracle:
     def __init__(self, nodes: List[Node], block_interval: int):
         self.block_interval = block_interval
