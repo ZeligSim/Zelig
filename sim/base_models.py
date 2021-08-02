@@ -14,6 +14,7 @@ from sim.network_util import get_delay, Region
 
 class Item:
     """Represents objects that can be transmitted over a network (e.g. blocks, messages)."""
+
     def __init__(self, sender_id: str, size: float):
         """
         Create an Item object.
@@ -25,8 +26,51 @@ class Item:
         self.sender_id = sender_id
 
 
+class Block(Item):
+    """Represents a Bitcoin block."""
+
+    def __init__(self, creator, prev_id: str, height: int):
+        """
+        Create a Block object.
+
+        * miner (`Node`): Node that created the block.
+        * prev_id (str): Id of the block this block was mined on top of.
+        * height (int): Height of the block in the blockchain.
+        """
+        super().__init__(None, 0)
+        self.prev_id = prev_id
+        self.miner = creator.name
+        self.created_at = creator.timestamp
+        self.height = height
+        self.size = 0
+        self.tx_count = 0
+        self.transactions = []
+        self.reward: Reward = None
+
+    def add_tx(self, tx):
+        self.transactions.append(tx)
+        self.size += tx.size
+        self.tx_count += 1
+
+    def has_tx(self, tx):
+        return tx in self.transactions
+
+    def __getstate__(self):
+        state = self.__dict__.copy()
+        del state['sender_id']
+        del state['size']
+        return state
+
+    def __setstate__(self, state):
+        self.__dict__.update(state)
+
+    def __str__(self) -> str:
+        return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
+
+
 class Packet:
     """Wrapper class for transmitting `Item` objects over the network."""
+
     def __init__(self, payload: Item):
         """
         Create a Packet object.
@@ -38,6 +82,7 @@ class Packet:
 
 class Node:
     """Represents the participants in the blockchain system."""
+
     def __init__(self, region, timestamp=0):
         """
         Create a Node object.
@@ -48,7 +93,6 @@ class Node:
         self.timestamp = timestamp
         self.region = region
         self.iter_seconds = 0.1
-
 
         self.inbox: Dict[int, List[Packet]] = dict()
         """Node's inbox with simulation timestamps as keys and lists of `Item`s to be consumed at that timestamp as values."""
@@ -111,3 +155,10 @@ class Node:
         for node in argv:
             self.outs[node.id] = node
             node.ins[self.id] = self
+
+
+class Reward:
+    def __init__(self, node: Node, value: int):
+        self.value = value
+        self.timestamp = node.timestamp
+        self.node = node

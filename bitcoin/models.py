@@ -15,48 +15,6 @@ from bitcoin.messages import InvMessage, GetDataMessage
 from bitcoin.consensus import *
 
 
-class Block(Item):
-    """Represents a Bitcoin block."""
-
-    def __init__(self, miner: Node, prev_id: str, height: int):
-        """
-        Create a Block object.
-
-        * miner (`Node`): Node that created the block.
-        * prev_id (str): Id of the block this block was mined on top of.
-        * height (int): Height of the block in the blockchain.
-        """
-        super().__init__(None, 0)
-        self.prev_id = prev_id
-        self.miner = miner.name
-        self.created_at = miner.timestamp
-        self.height = height
-        self.size = 80  # size of block header in bytes
-        self.tx_count = 0
-        self.transactions = []
-        self.reward: Reward = None
-
-    def add_tx(self, tx):
-        self.transactions.append(tx)
-        self.size += tx.size
-        self.tx_count += 1
-
-    def has_tx(self, tx):
-        return tx in self.transactions
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        del state['sender_id']
-        del state['size']
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-
-    def __str__(self) -> str:
-        return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
-
-
 class Transaction(Item):
     def __init__(self, sender_id: str, created_at: int, size: float, value: float, fee: float):
         super().__init__(sender_id, 0)
@@ -75,6 +33,12 @@ class Transaction(Item):
         We want the mempool heap to treat the highest feerate as the "minimum" element, so the comparison operator is <=.
         """
         return self.feerate >= other.feerate
+
+
+class BTCBlock(Block):
+    def __init__(self, creator, prev_id: str, height: int):
+        super().__init__(creator, prev_id, height)
+        self.size = 80  # size of block header in bytes
 
 
 class Miner(Node):
@@ -103,13 +67,13 @@ class Miner(Node):
         self.consensus_oracle: Oracle = None
 
         # --- PROTOCOL DATA STRUCTURES ---
-        self.blockchain: Dict[str, Block] = dict()
-        """A dictionary that stores `Block` ids as keys and `Block`s as values."""
+        self.blockchain: Dict[str, BTCBlock] = dict()
+        """A dictionary that stores `BTCBlock` ids as keys and `BTCBlock`s as values."""
 
         self.mempool: List[Transaction] = []  # heapq
         self.tx_ids: Dict[str, Transaction] = dict()
 
-        self.heads: List[Block] = []
+        self.heads: List[BTCBlock] = []
         """Stores the current head blocks (blocks that hasn't been mined on) as a list."""
 
         # --- BOOKKEEPING ---
@@ -169,7 +133,7 @@ class Miner(Node):
         Given an Item, performs the necessary action based on its type.
         * item (`sim.base_models.Item`): Item to consume.
         """
-        if type(item) == Block:
+        if type(item) == BTCBlock:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
             self.save_block(item, relay=True)
         elif type(item) == Transaction:
@@ -193,10 +157,10 @@ class Miner(Node):
             elif item.type == 'tx':
                 self.send_to(self.outs[item.sender_id], self.tx_ids[item.item_id])
 
-    def save_block(self, block: Block, relay=False):
+    def save_block(self, block: BTCBlock, relay=False):
         """
         Removes the given block from `heads` if it exists and adds it to the `blockchain`.
-        * block (`Block`): Block to add to the blockchain.
+        * block (`BTCBlock`): BTCBlock to add to the blockchain.
         """
         self.blockchain[block.id] = block
         try:

@@ -1,13 +1,6 @@
-from sim.base_models import Node, Item
+from sim.base_models import Node, Item, Reward
 from typing import List
 import random
-
-
-class Reward:
-    def __init__(self, node: Node,  value: int):
-        self.value = value
-        self.timestamp = node.timestamp
-        self.node = node
 
 
 class Oracle:
