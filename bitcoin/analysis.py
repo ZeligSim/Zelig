@@ -24,7 +24,6 @@ def get_all_blocks(nodes: List[Miner]) -> Dict[str, Block]:
     return blocks
 
 
-
 def get_longest_chain(blocks: Dict[str, Block]) -> List[Block]:
     """
     Computes and returns the list of blocks in the longest chain.
@@ -45,7 +44,7 @@ def block_prop_delays(block: Block, nodes: List[Miner]) -> List[int]:
     * block (Block): Block to calculate propagation times for.
     * nodes (List[Node]): List of all nodes.
     """
-    return [node.stat_block_rcvs.get(block.id, 2**64) - block.created_at for node in nodes]
+    return [node.stat_block_rcvs.get(block.id, 2 ** 64) - block.created_at for node in nodes]
 
 
 # how much time it takes for block to reach percent of nodes
@@ -60,7 +59,7 @@ def block_percentile_delay(block: Block, nodes: List[Miner], percent: float) -> 
     nodes_required = math.ceil(percent * len(nodes))
     delays.sort()
     result = delays[nodes_required - 1]
-    if result > 2**50: # did not reach that percentage of nodes
+    if result > 2 ** 50:  # did not reach that percentage of nodes
         return None
     return sorted(delays)[nodes_required - 1]
 

@@ -54,10 +54,8 @@ class Miner(Node):
         * iter_seconds (float): How many real-world seconds one simulation step corresponds to.
         * timestamp (int): Used to keep track of the simulation step count. Defaults to 0.
         """
-        super().__init__(region, timestamp)
-        self.name = name
+        super().__init__(iter_seconds, name, region, timestamp)
         self.mine_power = mine_power
-        self.iter_seconds = iter_seconds
         self.max_block_size = 1
         self.tx_per_iter = 0
 
@@ -66,15 +64,8 @@ class Miner(Node):
         self.mine_strategy = None
         self.consensus_oracle: Oracle = None
 
-        # --- PROTOCOL DATA STRUCTURES ---
-        self.blockchain: Dict[str, BTCBlock] = dict()
-        """A dictionary that stores `BTCBlock` ids as keys and `BTCBlock`s as values."""
-
         self.mempool: List[Transaction] = []  # heapq
         self.tx_ids: Dict[str, Transaction] = dict()
-
-        self.heads: List[BTCBlock] = []
-        """Stores the current head blocks (blocks that hasn't been mined on) as a list."""
 
         # --- BOOKKEEPING ---
         self.stat_block_rcvs: Dict[str, int] = dict()
@@ -86,30 +77,13 @@ class Miner(Node):
         logger.info(f'CREATED MINER {self.name}')
 
     def __getstate__(self):
-        """Return state values to be pickled."""
-        state = self.__dict__.copy()
-        # Remove the unpicklable entries.
-        del state['ins']
-        del state['outs']
-        del state['inbox']
-        del state['timestamp']
+        state = super().__getstate__()
         del state['mempool']
-        del state['tx_model']
-        del state['mine_strategy']
         return state
-
-    def __setstate__(self, state):
-        """Restore state from the unpickled state values."""
-        self.__dict__.update(state)
-
-    def __str__(self) -> str:
-        return self.name
 
     def reset(self):
         """Reset state back to simulation start."""
         super().reset()
-        self.blockchain = dict()
-        self.heads = []
         self.mempool = []
         self.tx_ids = dict()
         self.stat_block_rcvs = dict()
@@ -162,13 +136,8 @@ class Miner(Node):
         Removes the given block from `heads` if it exists and adds it to the `blockchain`.
         * block (`BTCBlock`): BTCBlock to add to the blockchain.
         """
-        self.blockchain[block.id] = block
-        try:
-            self.heads.remove(self.blockchain[block.prev_id])
-        except (ValueError, KeyError):
-            pass
+        super().save_block(block)
         self.stat_block_rcvs[block.id] = self.timestamp
-        self.heads.append(block)
         self.tx_model.update_mempool(self, block)
         if relay:
             self.publish_item(block, 'block')
@@ -183,15 +152,8 @@ class Miner(Node):
         for node in self.outs.values():
             self.send_to(node, msg)
 
-    def log_blockchain(self):
+    def print_blockchain(self, head: Block = None):
         head = self.mine_strategy.choose_head()
-        logger.warning(f'{self.name}')
-        logger.warning(f'\tBLOCKCHAIN:')
-        for block in self.blockchain.values():
-            logger.warning(f'\t\t{block}')
-        logger.warning(f'\tHEADS:')
-        for block in self.heads:
-            if block == head:
-                logger.warning(f'\t\t*** {block}')
-            else:
-                logger.warning(f'\t\t{block}')
+        super().print_blockchain(head)
+
+
