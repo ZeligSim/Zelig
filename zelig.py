@@ -3,7 +3,9 @@ import pickle
 import argparse
 from pathlib import Path
 from typing import Callable
+import matplotlib.pyplot as plt
 
+import psutil
 import yaml
 import time
 import random
@@ -37,7 +39,8 @@ class Simulation:
         self.nodes = []
         self.connection_predicate: Callable[[Node, Node], bool] = None
 
-    def run(self, report_time=False):
+    def run(self, report_time=False, track_perf=False):
+        cpu_percents, mem_percents = [], []
         if self.config_file is not None:
             self.__load_config_file(detailed=False)
 
@@ -60,11 +63,19 @@ class Simulation:
             sim_name = f'{self.name}_{rep}'
             for i in range(1, self.sim_iters):
                 [node.step(iter_seconds) for node in self.nodes]
+                if track_perf and i % 1000 == 0:
+                    cpu_percents.append(psutil.cpu_percent())
+                    mem_percents.append(psutil.virtual_memory().percent)
             end_time = time.time()
 
             if report_time:
                 print(f'Total simulation time (s):\t{end_time - start_time}')
                 print(f'Average time per step (s):\t{(end_time - start_time) / self.sim_iters}')
+            if track_perf:
+                print(f'Average CPU:\t{sum(cpu_percents)/len(cpu_percents)}')
+                print(f'Maximum CPU:\t{max(cpu_percents)}')
+                print(f'Average MEM:\t{sum(mem_percents) / len(mem_percents)}')
+                print(f'Maximum MEM:\t{max(mem_percents)}')
 
             logger.warning('Finished simulation. Saving nodes...')
             Path(f'{self.results_dir}/{sim_name}').mkdir(parents=True, exist_ok=True)
@@ -80,7 +91,7 @@ class Simulation:
     def __setup_mining(self):
         """Adds genesis block and sets up nodes' consensus oracles"""
         pow_oracle = PoWOracle(self.nodes, self.block_int_iters, self.block_reward)
-        genesis_block = Block(Miner('satoshi', 0, None, 1), None, 0)
+        genesis_block = BTCBlock(Miner('satoshi', 0, None, 1), None, 0)
         for node in self.nodes:
             node.consensus_oracle = pow_oracle
             node.save_block(genesis_block)
@@ -153,4 +164,4 @@ if __name__ == "__main__":
     if seed is not None:
         random.seed(seed)
     sim = Simulation(config_name)
-    sim.run(report_time=True)
+    sim.run(report_time=True, track_perf=True)
