@@ -13,6 +13,7 @@ from loguru import logger
 from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
 from bitcoin.consensus import *
+from bitcoin.bookkeeper import *
 
 
 class Transaction(Item):
@@ -68,17 +69,14 @@ class Miner(Node):
         self.tx_ids: Dict[str, Transaction] = dict()
 
         # --- BOOKKEEPING ---
-        self.stat_block_rcvs: Dict[str, int] = dict()
-        """Stores the receipt time of blocks, to calculate metrics such as block propagation times."""
-
-        self.stat_tx_rcvs: Dict[str, int] = dict()
-        """Stores the receipt time of transactions, for analysis."""
+        self.bookkeeper: Bookkeeper = None
 
         logger.info(f'CREATED MINER {self.name}')
 
     def __getstate__(self):
         state = super().__getstate__()
         del state['mempool']
+        del state['bookkeeper']
         return state
 
     def reset(self):
@@ -86,7 +84,7 @@ class Miner(Node):
         super().reset()
         self.mempool = []
         self.tx_ids = dict()
-        self.stat_block_rcvs = dict()
+        self.bookkeeper.register_node(self)  # to reset stats
 
     def step(self, seconds: float):
         items = super().step(seconds)
@@ -137,7 +135,7 @@ class Miner(Node):
         * block (`BTCBlock`): BTCBlock to add to the blockchain.
         """
         super().save_block(block)
-        self.stat_block_rcvs[block.id] = self.timestamp
+        self.bookkeeper.save_block(self, block, self.timestamp)
         self.tx_model.update_mempool(self, block)
         if relay:
             self.publish_item(block, 'block')

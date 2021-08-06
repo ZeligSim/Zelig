@@ -10,6 +10,8 @@ sys.path.append("..")
 
 from bitcoin.models import Miner, Block
 
+from bitcoin.bookkeeper import *
+
 
 def get_all_blocks(nodes: List[Miner]) -> Dict[str, Block]:
     """
@@ -38,13 +40,13 @@ def get_longest_chain(blocks: Dict[str, Block]) -> List[Block]:
     return chain
 
 
-def block_prop_delays(block: Block, nodes: List[Miner]) -> List[int]:
+def block_prop_delays(block: Block, bookkeeper: Bookkeeper) -> List[int]:
     """
     Given a block, computes how much time it took for that block to reach each node.
     * block (Block): Block to calculate propagation times for.
     * nodes (List[Node]): List of all nodes.
     """
-    return [node.stat_block_rcvs.get(block.id, 2 ** 64) - block.created_at for node in nodes]
+    return [bookkeeper.get_node_block_rcv(node, block) - block.created_at for node in nodes]
 
 
 # how much time it takes for block to reach percent of nodes
@@ -88,7 +90,7 @@ def avg_block_interval(node: Miner) -> float:
     * node (Node): Node to calculate average block interval for.
     """
     total, count = 0, 1
-    head = node.choose_prev_block()
+    head = node.mine_strategy.choose_head(node)
     while True:
         block = node.blockchain.get(head.prev_id, None)
         if block is None:

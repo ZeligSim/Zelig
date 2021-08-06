@@ -114,7 +114,7 @@ class FullTxModel(TxModel):
         Receive transaction, add it local mempool, save its receipt time, and relay to peers.
         """
         logger.debug(f'[{node.timestamp}] {node.name} RECEIVED TX {tx.id}')
-        node.stat_tx_rcvs[tx.id] = node.timestamp
+        node.bookkeeper.save_tx(node, tx, node.timestamp)
         node.tx_ids[tx.id] = tx
         heapq.heappush(node.mempool, tx)
         self.publish(node, tx, direct=False)  # relay

@@ -17,6 +17,7 @@ from sim.util import Region
 from bitcoin.tx_modelings import *
 from bitcoin.mining_strategies import *
 from bitcoin.consensus import *
+from bitcoin.bookkeeper import *
 
 
 class Simulation:
@@ -36,6 +37,7 @@ class Simulation:
         self.dynamic = False
         self.block_reward = 100
 
+        self.bookkeeper = None
         self.nodes = []
         self.connection_predicate: Callable[[Node, Node], bool] = None
 
@@ -82,6 +84,8 @@ class Simulation:
             for node in self.nodes:
                 with open(f'{self.results_dir}/{sim_name}/{node.name}', 'wb+') as f:
                     pickle.dump(node, f)
+            with open(f'{self.results_dir}/{sim_name}/bookkeeper', 'wb+') as f:
+                pickle.dump(self.bookkeeper, f)
             logger.warning(
                 f'Simulation {sim_name} complete. Dumped nodes to {self.results_dir}/{sim_name}. Have a good day!')
 
@@ -118,6 +122,7 @@ class Simulation:
                 TxModelClass = getattr(importlib.import_module('bitcoin.tx_modelings'), self.tx_modeling)
                 tx_modeling = TxModelClass()
                 mine_strategy = HonestMining()
+                self.bookkeeper = Bookkeeper()
                 logger.warning('Creating nodes...')
                 self.nodes = []
                 for node in config['nodes']:
@@ -126,6 +131,7 @@ class Simulation:
                     region = node['region']
                     for idx in range(num_nodes):
                         node = Miner(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds)
+                        self.bookkeeper.register_node(node)
                         node.tx_model = tx_modeling
                         node.mine_strategy = mine_strategy
                         node.tx_per_iter = self.tx_per_node_per_iter
