@@ -100,6 +100,10 @@ class Miner(Node):
         if self.consensus_oracle.can_mine(self):
             self.mine_strategy.mine_block(self)
 
+        space_use = sum([block.size for block in self.blockchain.values()])
+        space_use += self.tx_model.get_mempool_size(self)
+        self.bookkeeper.use_space(self, space_use)
+
     def consume(self, item: Item):
         """
         Given an Item, performs the necessary action based on its type.

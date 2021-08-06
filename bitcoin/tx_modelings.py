@@ -33,6 +33,12 @@ class TxModel:
     def update_mempool(self, node: Miner, block: Block):
         pass
 
+    def get_mempool_size(self, node: Miner):
+        return 0
+
+    def get_waiting_tx_count(self, node: Miner):
+        return 0
+
 
 class NoneTxModel(TxModel):
     def __init__(self):
@@ -89,6 +95,12 @@ class SimpleTxModel(TxModel):
         # self.mempool = sorted(self.mempool, reverse=True)
         pass
 
+    def get_mempool_size(self, node: Miner):
+        return sum([tx.size for tx in self.mempool])
+
+    def get_waiting_tx_count(self, node: Miner):
+        return len(self.mempool)
+
 
 class FullTxModel(TxModel):
     def __init__(self):
@@ -141,3 +153,9 @@ class FullTxModel(TxModel):
             except ValueError:
                 pass
         heapq.heapify(node.mempool)
+
+    def get_mempool_size(self, node: Miner):
+        return sum([tx.size for tx in node.mempool])
+
+    def get_waiting_tx_count(self, node: Miner):
+        return len(node.mempool)
