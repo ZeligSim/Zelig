@@ -12,7 +12,7 @@ sim.set_log_level('SUCCESS')
 sim.name = 'selfish_mine_test'
 sim.results_dir = '/Users/egeerdogan/desktop/projects/zelig/dumps'
 sim.sim_reps = 1
-sim.sim_iters = 100000
+sim.sim_iters = 200000
 sim.iter_seconds = 0.1
 sim.block_int_iters = 6000
 sim.max_block_size =  1000000
@@ -22,7 +22,7 @@ sim.block_reward = 100
 
 ring = lambda n1, n2: abs(n1.id - n2.id) == 1 or abs(n1.id - n2.id) == 9
 star = lambda n1, n2: n1.name == 'center' or n2.name == 'center'
-rand = lambda n1, n2: n2.id in [random.randint(0, 9) for _ in range(2)]
+rand = lambda n1, n2: n2.id in [random.randint(0, 9) for _ in range(3)]
 
 sim.connection_predicate = rand
 

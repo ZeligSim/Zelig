@@ -145,7 +145,7 @@ class Miner(Node):
             self.send_to(node, msg)
 
     def print_blockchain(self, head: Block = None):
-        head = self.mine_strategy.choose_head()
+        head = self.mine_strategy.choose_head(self)
         super().print_blockchain(head)
 
     def set_mining_strategy(self, mine_strategy):
