@@ -6,6 +6,7 @@ from typing import Callable
 import matplotlib.pyplot as plt
 
 import psutil
+import math
 import yaml
 import time
 import random
@@ -31,13 +32,14 @@ class Simulation:
         self.block_int_iters = 6000
         self.max_block_size = 10 ** 6
         self.connections_per_node = 2
+        self.tx_per_node_per_iter = 0
         self.nodes_in_each_region = -1
         self.set_log_level(self.log_level)
         self.config_file = config_file
         self.dynamic = False
         self.block_reward = 100
 
-        self.bookkeeper = None
+        self.bookkeeper = Bookkeeper()
         self.nodes = []
         self.connection_predicate: Callable[[Node, Node], bool] = None
 
@@ -48,7 +50,6 @@ class Simulation:
 
         iter_seconds = self.iter_seconds
         logger.warning(f'Simulation {self.name} ({self.sim_iters} iterations).')
-        logger.warning('Started simulation.')
         for rep in range(self.sim_reps):
             if self.config_file is not None:
                 self.__load_config_file(detailed=True)
@@ -63,6 +64,7 @@ class Simulation:
 
             start_time = time.time()
             sim_name = f'{self.name}_{rep}'
+            logger.warning('Started simulation.')
             for i in range(1, self.sim_iters):
                 [node.step(iter_seconds) for node in self.nodes]
                 if track_perf and i % 1000 == 0:
@@ -74,10 +76,10 @@ class Simulation:
                 print(f'Total simulation time (s):\t{end_time - start_time}')
                 print(f'Average time per step (s):\t{(end_time - start_time) / self.sim_iters}')
             if track_perf:
-                print(f'Average CPU:\t{sum(cpu_percents)/len(cpu_percents)}')
-                print(f'Maximum CPU:\t{max(cpu_percents)}')
-                print(f'Average MEM:\t{sum(mem_percents) / len(mem_percents)}')
-                print(f'Maximum MEM:\t{max(mem_percents)}')
+                print(f'Average CPU:\t{round(sum(cpu_percents) / len(cpu_percents), 1)}%')
+                print(f'Maximum CPU:\t{round(max(cpu_percents), 1)}%')
+                print(f'Average MEM:\t{round(sum(mem_percents) / len(mem_percents), 1)}%')
+                print(f'Maximum MEM:\t{round(max(mem_percents), 1)}%')
 
             logger.warning('Finished simulation. Saving nodes...')
             Path(f'{self.results_dir}/{sim_name}').mkdir(parents=True, exist_ok=True)
@@ -90,6 +92,10 @@ class Simulation:
                 f'Simulation {sim_name} complete. Dumped nodes to {self.results_dir}/{sim_name}. Have a good day!')
 
     def add_node(self, node: Node):
+        self.bookkeeper.register_node(node)
+        node.tx_model = self.tx_modeling
+        node.tx_per_iter = self.tx_per_node_per_iter
+        node.max_block_size = self.max_block_size
         self.nodes.append(node)
 
     def __setup_mining(self):
@@ -98,7 +104,8 @@ class Simulation:
         genesis_block = BTCBlock(Miner('satoshi', 0, None, 1), None, 0)
         for node in self.nodes:
             node.consensus_oracle = pow_oracle
-            node.save_block(genesis_block)
+            node.mine_strategy.receive_block(node, genesis_block, shallow=True)
+            node.mine_strategy.setup(node)
 
     def __load_config_file(self, detailed=False):
         with open(self.config_file, 'r') as f:
@@ -120,9 +127,8 @@ class Simulation:
 
             if detailed:
                 TxModelClass = getattr(importlib.import_module('bitcoin.tx_modelings'), self.tx_modeling)
-                tx_modeling = TxModelClass()
+                self.tx_modeling = TxModelClass()
                 mine_strategy = HonestMining()
-                self.bookkeeper = Bookkeeper()
                 logger.warning('Creating nodes...')
                 self.nodes = []
                 for node in config['nodes']:
@@ -131,12 +137,8 @@ class Simulation:
                     region = node['region']
                     for idx in range(num_nodes):
                         node = Miner(f'MINER_{region}_{idx}', mine_power, Region(region), self.iter_seconds)
-                        self.bookkeeper.register_node(node)
-                        node.tx_model = tx_modeling
+                        self.add_node(node)
                         node.mine_strategy = mine_strategy
-                        node.tx_per_iter = self.tx_per_node_per_iter
-                        node.max_block_size = self.max_block_size
-                        self.nodes.append(node)
                 self.__setup_mining()
 
                 logger.warning('Setting up random P2P network...')

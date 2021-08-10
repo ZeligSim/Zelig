@@ -173,14 +173,6 @@ class Node:
         except KeyError:
             node.inbox[packet.reveal_at] = [packet]
 
-    def save_block(self, block: Block, relay=False):
-        self.blockchain[block.id] = block
-        try:
-            self.heads.remove(self.blockchain[block.prev_id])
-        except (ValueError, KeyError):
-            pass
-        self.heads.append(block)
-
     def connect(self, *argv):
         """
         Establish an outgoing connection to one or more nodes.
