@@ -94,14 +94,16 @@ class SelfishMining(NullMining):
         delta_prev = self.get_delta_prev(node)
         node.private_branch_len += 1
         if delta_prev == 0 and node.private_branch_len == 2:
+            logger.info('SELFISH MINER PUBLISHED PRIVATE BLOCKS')
             for block in node.private_chain.values():
+                node.blockchain[block.id] = block
                 node.publish_item(block, 'block')
             node.private_branch_len = 0
         return block
 
     def receive_block(self, node: Miner, block: BTCBlock, relay: bool = False, shallow=False):
         # append new block to public chain
-        super().receive_block(node, block, relay=False)
+        super().receive_block(node, block, relay=True)
 
         if not shallow:
             delta_prev = self.get_delta_prev(node)
@@ -116,7 +118,9 @@ class SelfishMining(NullMining):
             # elif delta_prev == 2:
             else:
                 # publish all private chain
+                logger.info('SELFISH MINER PUBLISHED PRIVATE BLOCKS')
                 for block in node.private_chain.values():
+                    node.blockchain[block.id] = block
                     node.publish_item(block, 'block')
 
     def get_delta_prev(self, node: Miner) -> int:

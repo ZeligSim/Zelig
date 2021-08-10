@@ -11,7 +11,7 @@ results_directory: /Users/egeerdogan/desktop/projects/zelig/dumps
 #   SUCCESS:  + block generations
 #   INFO:     + block receipts
 #   DEBUG:    + all protocol messages
-log_level: SUCCESS
+log_level: DEBUG
 
 # how many times to repeat the same simulation
 sim_reps: 1

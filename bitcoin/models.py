@@ -130,7 +130,10 @@ class Miner(Node):
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
-                self.send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
+                try:
+                    self.send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
+                except KeyError:
+                    pass
             elif item.type == 'tx':
                 self.send_to(self.outs[item.sender_id], self.tx_ids[item.item_id])
 

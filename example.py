@@ -12,32 +12,40 @@ sim.set_log_level('SUCCESS')
 sim.name = 'selfish_mine_test'
 sim.results_dir = '/Users/egeerdogan/desktop/projects/zelig/dumps'
 sim.sim_reps = 1
-sim.sim_iters = 200000
+sim.sim_iters = 5000000
 sim.iter_seconds = 0.1
 sim.block_int_iters = 6000
 sim.max_block_size =  1000000
-sim.tx_modeling = SimpleTxModel()
+sim.tx_modeling = NoneTxModel()
 sim.dynamic = False
 sim.block_reward = 100
 
 ring = lambda n1, n2: abs(n1.id - n2.id) == 1 or abs(n1.id - n2.id) == 9
 star = lambda n1, n2: n1.name == 'center' or n2.name == 'center'
-rand = lambda n1, n2: n2.id in [random.randint(0, 9) for _ in range(3)]
+rand = lambda n1, n2: n2.id in [random.randint(0, 32) for _ in range(3)]
 
 sim.connection_predicate = rand
 
-selfish_count, honest_count = 8, 12
 selfish_mining = SelfishMining()
 honest_mining = HonestMining()
+null_mining = NullMining()
 
-for i in range(selfish_count):
-    miner = Miner(f'SFSH_{i}', 10, Region('US'), sim.iter_seconds)
-    miner.mine_strategy = selfish_mining
-    sim.add_node(miner)
+selfish_power, honest_power = 40, 60
 
-for i in range(honest_count):
-    miner = Miner(f'HNST_{i}', 10, Region('US'), sim.iter_seconds)
-    miner.mine_strategy = honest_mining
-    sim.add_node(miner)
+selfish_miner = Miner(f'SELFISH', selfish_power, Region('US'), sim.iter_seconds)
+selfish_miner.mine_strategy = selfish_mining
+selfish_miner.id = 0
+sim.add_node(selfish_miner)
+
+honest_miner = Miner(f'HONEST', honest_power, Region('US'), sim.iter_seconds)
+honest_miner.mine_strategy = honest_mining
+honest_miner.id = 1
+sim.add_node(honest_miner)
+
+for i in range(30):
+    full_node = Miner(f'FULL_{i}', 10, Region('US'), sim.iter_seconds)
+    full_node.mine_strategy = null_mining
+    full_node.id = i + 2
+    sim.add_node(full_node)
 
 sim.run()
