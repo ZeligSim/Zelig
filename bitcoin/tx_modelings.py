@@ -33,6 +33,12 @@ class TxModel:
     def update_mempool(self, node: Miner, block: Block):
         pass
 
+    def get_mempool_size(self, node: Miner):
+        return 0
+
+    def get_waiting_tx_count(self, node: Miner):
+        return 0
+
 
 class NoneTxModel(TxModel):
     def __init__(self):
@@ -89,6 +95,12 @@ class SimpleTxModel(TxModel):
         # self.mempool = sorted(self.mempool, reverse=True)
         pass
 
+    def get_mempool_size(self, node: Miner):
+        return sum([tx.size for tx in self.mempool])
+
+    def get_waiting_tx_count(self, node: Miner):
+        return len(self.mempool)
+
 
 class FullTxModel(TxModel):
     def __init__(self):
@@ -114,7 +126,7 @@ class FullTxModel(TxModel):
         Receive transaction, add it local mempool, save its receipt time, and relay to peers.
         """
         logger.debug(f'[{node.timestamp}] {node.name} RECEIVED TX {tx.id}')
-        node.stat_tx_rcvs[tx.id] = node.timestamp
+        node.bookkeeper.save_tx(node, tx, node.timestamp)
         node.tx_ids[tx.id] = tx
         heapq.heappush(node.mempool, tx)
         self.publish(node, tx, direct=False)  # relay
@@ -141,3 +153,9 @@ class FullTxModel(TxModel):
             except ValueError:
                 pass
         heapq.heapify(node.mempool)
+
+    def get_mempool_size(self, node: Miner):
+        return sum([tx.size for tx in node.mempool])
+
+    def get_waiting_tx_count(self, node: Miner):
+        return len(node.mempool)

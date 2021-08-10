@@ -25,6 +25,12 @@ iter_seconds: 0.1
 # expected block interval in iters
 block_int_iters: 6000
 
+# block reward gained from mining
+block_reward: 100
+
+# adjust the mining difficulty dynamically (True or False)
+dynamic_difficulty: False
+
 # maximum block size in bytes
 max_block_size: 1000000 # 1 MB
 

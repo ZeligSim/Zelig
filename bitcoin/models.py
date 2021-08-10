@@ -2,7 +2,6 @@
 Main implementation of the Bitcoin simulator.
 """
 
-import random
 import sys
 
 from typing import Dict
@@ -13,47 +12,8 @@ from loguru import logger
 
 from sim.base_models import *
 from bitcoin.messages import InvMessage, GetDataMessage
-
-
-class Block(Item):
-    """Represents a Bitcoin block."""
-
-    def __init__(self, miner: Node, prev_id: str, height: int):
-        """
-        Create a Block object.
-
-        * miner (`Node`): Node that created the block.
-        * prev_id (str): Id of the block this block was mined on top of.
-        * height (int): Height of the block in the blockchain.
-        """
-        super().__init__(None, 0)
-        self.prev_id = prev_id
-        self.miner = miner.name
-        self.created_at = miner.timestamp
-        self.height = height
-        self.size = 80  # size of block header in bytes
-        self.tx_count = 0
-        self.transactions = []
-
-    def add_tx(self, tx):
-        self.transactions.append(tx)
-        self.size += tx.size
-        self.tx_count += 1
-
-    def has_tx(self, tx):
-        return tx in self.transactions
-
-    def __getstate__(self):
-        state = self.__dict__.copy()
-        del state['sender_id']
-        del state['size']
-        return state
-
-    def __setstate__(self, state):
-        self.__dict__.update(state)
-
-    def __str__(self) -> str:
-        return f'BLOCK (id:{self.id}, prev: {self.prev_id})'
+from bitcoin.consensus import *
+from bitcoin.bookkeeper import *
 
 
 class Transaction(Item):
@@ -76,6 +36,12 @@ class Transaction(Item):
         return self.feerate >= other.feerate
 
 
+class BTCBlock(Block):
+    def __init__(self, creator, prev_id: str, height: int):
+        super().__init__(creator, prev_id, height)
+        self.size = 80  # size of block header in bytes
+
+
 class Miner(Node):
     """Represents a Bitcoin miner. """
 
@@ -89,62 +55,36 @@ class Miner(Node):
         * iter_seconds (float): How many real-world seconds one simulation step corresponds to.
         * timestamp (int): Used to keep track of the simulation step count. Defaults to 0.
         """
-        super().__init__(region, timestamp)
-        self.name = name
+        super().__init__(iter_seconds, name, region, timestamp)
         self.mine_power = mine_power
-        self.difficulty = 0
-        self.mine_probability = 0
-        self.iter_seconds = iter_seconds
         self.max_block_size = 1
-
-        self.tx_model = None
         self.tx_per_iter = 0
 
+        # --- MODULES ---
+        self.tx_model = None
         self.mine_strategy = None
-
-        self.blockchain: Dict[str, Block] = dict()
-        """A dictionary that stores `Block` ids as keys and `Block`s as values."""
+        self.consensus_oracle: Oracle = None
 
         self.mempool: List[Transaction] = []  # heapq
         self.tx_ids: Dict[str, Transaction] = dict()
 
-        self.heads: List[Block] = []
-        """Stores the current head blocks (blocks that hasn't been mined on) as a list."""
-
-        self.stat_block_rcvs: Dict[str, int] = dict()
-        """Stores the receipt time of blocks, to calculate metrics such as block propagation times."""
-
-        self.stat_tx_rcvs: Dict[str, int] = dict()
-        """Stores the receipt time of transactions, for analysis."""
+        # --- BOOKKEEPING ---
+        self.bookkeeper: Bookkeeper = None
 
         logger.info(f'CREATED MINER {self.name}')
 
     def __getstate__(self):
-        """Return state values to be pickled."""
-        state = self.__dict__.copy()
-        # Remove the unpicklable entries.
-        del state['ins']
-        del state['outs']
-        del state['inbox']
-        del state['timestamp']
+        state = super().__getstate__()
         del state['mempool']
-        del state['tx_model']
-        del state['mine_strategy']
+        del state['bookkeeper']
         return state
-
-    def __setstate__(self, state):
-        """Restore state from the unpickled state values."""
-        self.__dict__.update(state)
-
-    def __str__(self) -> str:
-        return self.name
 
     def reset(self):
         """Reset state back to simulation start."""
         super().reset()
-        self.blockchain = dict()
-        self.heads = []
-        self.stat_block_rcvs = dict()
+        self.mempool = []
+        self.tx_ids = dict()
+        self.bookkeeper.register_node(self)  # to reset stats
 
     def step(self, seconds: float):
         items = super().step(seconds)
@@ -157,25 +97,21 @@ class Miner(Node):
         for c in range(tx_count):
             self.tx_model.generate(self)
 
-        if random.random() <= self.mine_probability:
+        if self.consensus_oracle.can_mine(self):
             self.mine_strategy.mine_block(self)
 
-    def set_difficulty(self, difficulty: float):
-        """
-        Set mining difficulty to the given value. Mining difficulty is the probability of finding a block in one step with a mining power of 1.
-        * difficulty (float): new difficulty value.
-        """
-        self.difficulty = difficulty
-        self.mine_probability = self.mine_power * self.difficulty
+        space_use = sum([block.size for block in self.blockchain.values()])
+        space_use += self.tx_model.get_mempool_size(self)
+        self.bookkeeper.use_space(self, space_use)
 
     def consume(self, item: Item):
         """
         Given an Item, performs the necessary action based on its type.
         * item (`sim.base_models.Item`): Item to consume.
         """
-        if type(item) == Block:
+        if type(item) == BTCBlock:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
-            self.save_and_relay_block(item)
+            self.save_block(item, relay=True)
         elif type(item) == Transaction:
             self.tx_model.receive(self, item)
         elif type(item) == InvMessage:
@@ -197,20 +133,16 @@ class Miner(Node):
             elif item.type == 'tx':
                 self.send_to(self.outs[item.sender_id], self.tx_ids[item.item_id])
 
-    def save_and_relay_block(self, block: Block):
+    def save_block(self, block: BTCBlock, relay=False):
         """
         Removes the given block from `heads` if it exists and adds it to the `blockchain`.
-        * block (`Block`): Block to add to the blockchain.
+        * block (`BTCBlock`): BTCBlock to add to the blockchain.
         """
-        self.blockchain[block.id] = block
-        try:
-            self.heads.remove(self.blockchain[block.prev_id])
-        except (ValueError, KeyError):
-            pass
-        self.stat_block_rcvs[block.id] = self.timestamp
-        self.heads.append(block)
+        super().save_block(block)
+        self.bookkeeper.save_block(self, block, self.timestamp)
         self.tx_model.update_mempool(self, block)
-        self.publish_item(block, 'block')
+        if relay:
+            self.publish_item(block, 'block')
 
     def publish_item(self, item: Item, item_type: str):
         """
@@ -222,15 +154,8 @@ class Miner(Node):
         for node in self.outs.values():
             self.send_to(node, msg)
 
-    def log_blockchain(self):
+    def print_blockchain(self, head: Block = None):
         head = self.mine_strategy.choose_head()
-        logger.warning(f'{self.name}')
-        logger.warning(f'\tBLOCKCHAIN:')
-        for block in self.blockchain.values():
-            logger.warning(f'\t\t{block}')
-        logger.warning(f'\tHEADS:')
-        for block in self.heads:
-            if block == head:
-                logger.warning(f'\t\t*** {block}')
-            else:
-                logger.warning(f'\t\t{block}')
+        super().print_blockchain(head)
+
+
