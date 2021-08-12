@@ -73,8 +73,20 @@ class Analysis:
         Given a node, returns the share of orphan blocks from that node's point of view.
         * node (Miner): Node to calculate stale rate for.
         """
-        # return (len(node.heads) - 1) / len(node.blockchain)
-        return 109238129038120938
+        all_blocks = self.get_all_blocks()
+        total_count = len(all_blocks)
+        main_count = len(self.get_longest_chain(all_blocks))
+        return (total_count - main_count) / total_count
+
+    def reward_distribution(self) -> Dict[Miner, int]:
+        """
+        Returns the total mining rewards collected for each miner as a dictionary with miner names as keys.
+        """
+        rewards = dict()
+        main_chain = self.get_longest_chain(self.get_all_blocks())
+        for block in main_chain:
+            rewards[block.miner] = rewards.get(block.miner, 0) + block.reward.value
+        return rewards
 
     def transactions_per_second(self, blocks: List[Block], sim_seconds: int) -> float:
         """

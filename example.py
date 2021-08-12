@@ -8,11 +8,11 @@ from zelig import Simulation
 
 """ CONFIGURING WITH CODE """
 sim = Simulation()
-sim.set_log_level('INFO')
+sim.set_log_level('SUCCESS')
 sim.name = 'selfish_mine_test'
 sim.results_dir = '/Users/egeerdogan/desktop/projects/zelig/dumps'
 sim.sim_reps = 1
-sim.sim_iters = 100000
+sim.sim_iters = 5000000
 sim.iter_seconds = 0.1
 sim.block_int_iters = 6000
 sim.max_block_size = 1000000
@@ -50,6 +50,3 @@ sim.add_node(honest_miner)
 #     sim.add_node(full_node)
 
 sim.run(report_time=True, track_perf=True)
-
-honest_miner.print_blockchain()
-selfish_miner.print_blockchain()
