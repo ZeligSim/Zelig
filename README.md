@@ -1,5 +1,9 @@
 # Zelig
 
+<p align="center">
+      <img src="assets/zelig_profile.png" width="220">      
+</p>
+
 **Description**: Zelig is a (WIP) blockchain simulator designed with the main goals of customizability and extensibility to streamline future research on blockchain-based systems.
 
 **Reference Documentation**: [https://zeligsim.github.io](https://zeligsim.github.io)
