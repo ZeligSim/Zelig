@@ -50,3 +50,6 @@ sim.add_node(honest_miner)
 #     sim.add_node(full_node)
 
 sim.run(report_time=True, track_perf=True)
+
+honest_miner.print_blockchain()
+selfish_miner.print_blockchain()

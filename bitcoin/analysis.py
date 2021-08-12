@@ -73,7 +73,8 @@ class Analysis:
         Given a node, returns the share of orphan blocks from that node's point of view.
         * node (Miner): Node to calculate stale rate for.
         """
-        return (len(node.heads) - 1) / len(node.blockchain)
+        # return (len(node.heads) - 1) / len(node.blockchain)
+        return 109238129038120938
 
     def transactions_per_second(self, blocks: List[Block], sim_seconds: int) -> float:
         """
