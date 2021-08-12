@@ -64,9 +64,6 @@ class SelfishMining(NullMining):
         node.private_branch_len = 0
 
     def choose_head(self, node: Miner, private=True) -> BTCBlock:
-        """
-        Always mine at the head of the private chain
-        """
         chain = node.private_chain if private else node.blockchain
 
         max_height, max_block = 0, None
@@ -77,7 +74,6 @@ class SelfishMining(NullMining):
         return max_block
 
     def generate_block(self, node: Miner, prev: BTCBlock = None) -> BTCBlock:
-        # create block
         if prev is None:
             prev = self.choose_head(node)
         block = BTCBlock(node, prev.id, prev.height + 1)
@@ -86,12 +82,10 @@ class SelfishMining(NullMining):
         block.reward = node.consensus_oracle.get_reward(node)
         logger.success(f'[{node.timestamp}] {node.name} GENERATED BLOCK {block.id} ==> {prev.id}')
 
-        # save to private chain
         node.private_chain[block.id] = block
         node.bookkeeper.save_block(node, block, node.timestamp)
         node.tx_model.update_mempool(node, block)
 
-        # publish private chain if conditions are met
         delta_prev = self.get_delta_prev(node)
         node.private_branch_len += 1
         if delta_prev == 0 and node.private_branch_len == 2:
@@ -100,7 +94,6 @@ class SelfishMining(NullMining):
         return block
 
     def receive_block(self, node: Miner, block: BTCBlock, relay: bool = False, shallow=False):
-        # append new block to public chain
         if not shallow:
             delta_prev = self.get_delta_prev(node)
 
@@ -108,19 +101,14 @@ class SelfishMining(NullMining):
 
         if not shallow:
             if delta_prev == 0:
-                # they win. reset.
                 node.private_chain = node.blockchain.copy()
                 node.private_branch_len = 0
             elif delta_prev == 1:
-                # publish last block in private chain
                 self.publish_private_chain(node)
-            # elif delta_prev == 2:
             else:
-                # publish all private chain
                 self.publish_private_chain(node)
 
     def publish_private_chain(self, node: Miner):
-        logger.info('SELFISH MINER PUBLISHED PRIVATE BLOCKS')
         for block in node.private_chain.values():
             node.blockchain[block.id] = block
             node.publish_item(block, 'block')
@@ -128,8 +116,4 @@ class SelfishMining(NullMining):
     def get_delta_prev(self, node: Miner) -> int:
         priv_length = self.choose_head(node).height
         pub_length = self.choose_head(node, private=False).height
-        delta_prev = priv_length - pub_length
-        if delta_prev < 0:
-            logger.error('something went wring')
-            exit()
-        return delta_prev
+        return priv_length - pub_length

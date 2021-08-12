@@ -31,7 +31,7 @@ selfish_mining = SelfishMining()
 honest_mining = HonestMining()
 null_mining = NullMining()
 
-selfish_power, honest_power = 40,60
+selfish_power, honest_power = 40, 60
 
 selfish_miner = Miner(f'SELFISH', selfish_power, Region('US'), sim.iter_seconds)
 selfish_miner.mine_strategy = selfish_mining
@@ -43,6 +43,7 @@ honest_miner.mine_strategy = honest_mining
 honest_miner.id = 1
 sim.add_node(honest_miner)
 
+# POPULATE NETWORK WITH FULL NODES
 # for i in range(30):
 #     full_node = Miner(f'FULL_{i}', 10, Region('US'), sim.iter_seconds)
 #     full_node.mine_strategy = null_mining
