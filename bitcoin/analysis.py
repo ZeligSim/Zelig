@@ -92,7 +92,7 @@ class Analysis:
         head = node.mine_strategy.choose_head(node)
         while True:
             block = node.blockchain.get(head.prev_id, None)
-            if block is None:
+            if block is None or type(block) == str:
                 break
             count += 1
             total += head.created_at - block.created_at

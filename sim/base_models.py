@@ -98,9 +98,6 @@ class Node:
         self.blockchain: Dict[str, Block] = dict()
         """A dictionary that stores `BTCBlock` ids as keys and `BTCBlock`s as values."""
 
-        self.heads: List[Block] = []
-        """Stores the current head blocks (blocks that hasn't been mined on) as a list."""
-
         self.inbox: Dict[int, List[Packet]] = dict()
         """Node's inbox with simulation timestamps as keys and lists of `Item`s to be consumed at that timestamp as values."""
 
@@ -151,7 +148,6 @@ class Node:
         """
         self.timestamp = 0
         self.blockchain = dict()
-        self.heads = []
         self.inbox = dict()
         self.ins = dict()
         self.outs = dict()
@@ -187,12 +183,6 @@ class Node:
         logger.warning(f'\tBLOCKCHAIN:')
         for block in self.blockchain.values():
             logger.warning(f'\t\t{block}')
-        logger.warning(f'\tHEADS:')
-        for block in self.heads:
-            if block == head:
-                logger.warning(f'\t\t*** {block}')
-            else:
-                logger.warning(f'\t\t{block}')
 
 
 class Reward:
