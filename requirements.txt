@@ -1,4 +1,2 @@
-numpy==1.19.5
-
-loguru~=0.5.1
-PyYAML~=5.4.1
+matplotlib==3.4.2
+psutil==5.7.0
