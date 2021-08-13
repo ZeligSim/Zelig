@@ -1,16 +1,28 @@
 # Zelig
 
 <p align="center">
-      <img src="assets/zelig_profile.png" width="220">      
+      <img src="assets/zelig_profile.png" width="220" alt="profile picture">      
 </p>
 
 **Zelig** is a (WIP) blockchain simulator designed with the main goals of customizability and extensibility to streamline research on blockchain-based systems, and provide a useful tool for blockchain education. 
 
-~~**Reference Documentation** : [https://zeligsim.github.io](https://zeligsim.github.io)~~ (updated soon)
+~~**Reference Documentation** : [https://zeligsim.github.io](https://zeligsim.github.io)~~ (will be updated soon)
 
 [What is behind the name?](https://www.imdb.com/title/tt0086637/)
 
-## Installation
+- [Installation](#installation)
+- [Design](#design)
+- [Running Simulations](#running-simulations)
+  * [Setup with Config Files](#setup-with-config-files)
+  * [Programmatic Setup](#programmatic-setup)
+- [Customizing Simulations](#customizing-simulations)
+  * [Custom Consensus Protocols](#custom-consensus-protocols)
+  * [Custom Mining Strategies](#custom-mining-strategies)
+- [Analysis](#analysis)
+- [Contributing](#contributing)
+- [Cite Zelig in Your Work](#cite-zelig-in-your-work)
+
+# Installation
 
 To install zelig, clone this repository with the following command:
 ```
