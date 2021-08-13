@@ -51,7 +51,6 @@ class Analysis:
         """
         return [self.bookkeeper.get_node_block_rcv(node, block) - block.created_at for node in self.nodes]
 
-    # how much time it takes for block to reach percent of nodes
     def block_percentile_delay(self, block: Block, percent: float) -> int:
         """
         Calculates the time it takes for a block to reach a given percent of the nodes.

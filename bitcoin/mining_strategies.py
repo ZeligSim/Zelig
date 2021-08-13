@@ -1,3 +1,7 @@
+"""
+Mining strategies. For performance, although not strictly enforced, we recommend using these classes as singletons.
+"""
+
 from loguru import logger
 
 from bitcoin.models import Miner, BTCBlock
@@ -5,6 +9,9 @@ from bitcoin.consensus import Reward
 
 
 class NullMining:
+    """
+    The default no-mining strategy. Corresponds to the full nodes in Bitcoin.
+    """
     def __init__(self):
         pass
 
@@ -23,9 +30,17 @@ class NullMining:
         return max_block
 
     def generate_block(self, node: Miner, prev: BTCBlock = None) -> BTCBlock:
+        """
+        Specifies the strategy for mining  a new block.
+        """
         pass
 
     def receive_block(self, node: Miner, block: BTCBlock, relay: bool = False, shallow=False):
+        """
+        Specifies the strategy for receiving a block.
+
+        The given block is published to the node's peers if `relay` is True.
+        """
         node.blockchain[block.id] = block
         node.bookkeeper.save_block(node, block, node.timestamp)
         node.tx_model.update_mempool(node, block)
@@ -34,6 +49,9 @@ class NullMining:
 
 
 class HonestMining(NullMining):
+    """
+    Implements a honest miner following the Bitcoin protocol.
+    """
     def __init__(self):
         super().__init__()
 
@@ -56,6 +74,10 @@ class HonestMining(NullMining):
 
 
 class SelfishMining(NullMining):
+    """
+    Implements a miner  launching the selfish mining attack.
+    See https://arxiv.org/abs/1311.0243 for the details.
+    """
     def __init__(self):
         super().__init__()
 

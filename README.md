@@ -6,7 +6,7 @@
 
 **Zelig** is a (work-in-progress) blockchain simulator designed with the main goals of customizability and extensibility to streamline research on blockchain-based systems, and provide a useful tool for blockchain education. 
 
-~~**Reference Documentation** : [https://zeligsim.github.io](https://zeligsim.github.io)~~ (will be updated soon)
+**Reference Documentation** : [https://zeligsim.github.io](https://zeligsim.github.io)
 
 [What is behind the name?](https://www.imdb.com/title/tt0086637/)
 
