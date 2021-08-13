@@ -4,7 +4,7 @@
       <img src="assets/zelig_profile.png" width="220" alt="profile picture">      
 </p>
 
-**Zelig** is a (WIP) blockchain simulator designed with the main goals of customizability and extensibility to streamline research on blockchain-based systems, and provide a useful tool for blockchain education. 
+**Zelig** is a (work-in-progress) blockchain simulator designed with the main goals of customizability and extensibility to streamline research on blockchain-based systems, and provide a useful tool for blockchain education. 
 
 ~~**Reference Documentation** : [https://zeligsim.github.io](https://zeligsim.github.io)~~ (will be updated soon)
 
@@ -129,7 +129,7 @@ The `Analysis` class defined in `bitcoin/analysis.py` provides some useful metho
 
 # Contributing
 
-TODO
+We are happy to see that you want to contribute to Zelig. Until we have a more formal procedure, please open an issue explaining your proposed request/bug/comment, and we will shortly get to it.
 
 # Cite Zelig in Your Work
 

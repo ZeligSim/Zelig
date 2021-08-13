@@ -3,19 +3,16 @@ import pickle
 import argparse
 from pathlib import Path
 from typing import Callable
-import matplotlib.pyplot as plt
 
 import psutil
-import math
 import yaml
 import time
-import random
 from loguru import logger
 
-from bitcoin.models import Block, Miner
 from sim.base_models import Node
 from sim.util import Region
 from bitcoin.tx_modelings import *
+from bitcoin.models import Miner
 from bitcoin.mining_strategies import *
 from bitcoin.consensus import *
 from bitcoin.bookkeeper import *
@@ -73,13 +70,13 @@ class Simulation:
             end_time = time.time()
 
             if report_time:
-                print(f'Total simulation time (s):\t{end_time - start_time}')
-                print(f'Average time per step (s):\t{(end_time - start_time) / self.sim_iters}')
+                logger.warning(f'Total simulation time (s):\t{end_time - start_time}')
+                logger.warning(f'Average time per step (s):\t{(end_time - start_time) / self.sim_iters}')
             if track_perf:
-                print(f'Average CPU:\t{round(sum(cpu_percents) / len(cpu_percents), 1)}%')
-                print(f'Maximum CPU:\t{round(max(cpu_percents), 1)}%')
-                print(f'Average MEM:\t{round(sum(mem_percents) / len(mem_percents), 1)}%')
-                print(f'Maximum MEM:\t{round(max(mem_percents), 1)}%')
+                logger.warning(f'Average CPU:\t{round(sum(cpu_percents) / len(cpu_percents), 1)}%')
+                logger.warning(f'Maximum CPU:\t{round(max(cpu_percents), 1)}%')
+                logger.warning(f'Average MEM:\t{round(sum(mem_percents) / len(mem_percents), 1)}%')
+                logger.warning(f'Maximum MEM:\t{round(max(mem_percents), 1)}%')
 
             logger.warning('Finished simulation. Saving nodes...')
             Path(f'{self.results_dir}/{sim_name}').mkdir(parents=True, exist_ok=True)
@@ -89,7 +86,7 @@ class Simulation:
             with open(f'{self.results_dir}/{sim_name}/bookkeeper', 'wb+') as f:
                 pickle.dump(self.bookkeeper, f)
             logger.warning(
-                f'Simulation {sim_name} complete. Dumped nodes to {self.results_dir}/{sim_name}. Have a good day!')
+                f'Simulation {sim_name} done. Saved nodes to {self.results_dir}/{sim_name}')
 
     def add_node(self, node: Node):
         self.bookkeeper.register_node(node)
@@ -126,8 +123,8 @@ class Simulation:
             self.set_log_level(config['log_level'])
 
             if detailed:
-                TxModelClass = getattr(importlib.import_module('bitcoin.tx_modelings'), self.tx_modeling)
-                self.tx_modeling = TxModelClass()
+                TxClass = getattr(importlib.import_module('bitcoin.tx_modelings'), self.tx_modeling)
+                self.tx_modeling = TxClass()
                 mine_strategy = HonestMining()
                 logger.warning('Creating nodes...')
                 self.nodes = []

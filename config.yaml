@@ -6,7 +6,7 @@ sim_name: dev
 results_directory: /Users/egeerdogan/desktop/projects/zelig/dumps
 
 # simulation events logging level
-#   CRITICAL: none
+#   CRITICAL: disable any output
 #   WARNING:  only simulator messages (recommended)
 #   SUCCESS:  + block generations
 #   INFO:     + block receipts

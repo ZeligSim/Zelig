@@ -83,18 +83,6 @@ class SimpleTxModel(TxModel):
                 break
         return block
 
-    def update_mempool(self, node: Miner, block: Block):
-        """
-        **No need to update since added tx are removed from mempool when mining.**
-        """
-        # if not self.updated_blocks.get(block.id, False):
-        #     for tx in block.transactions:
-        #         self.mempool.remove(tx)
-        #         heapq.heapify(self.mempool)
-        #     self.updated_blocks[block.id] = True
-        # self.mempool = sorted(self.mempool, reverse=True)
-        pass
-
     def get_mempool_size(self, node: Miner):
         return sum([tx.size for tx in self.mempool])
 
@@ -144,7 +132,7 @@ class FullTxModel(TxModel):
 
     def update_mempool(self, node: Miner, block: Block):
         """
-        Remove the transactions in the  block from the local mempool.
+        Remove the transactions in the block from the local mempool.
         """
         for tx in block.transactions:
             # del node.tx_ids[tx.id]

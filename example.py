@@ -7,6 +7,8 @@ from bitcoin.mining_strategies import *
 from zelig import Simulation
 
 """ CONFIGURING WITH CODE """
+
+# create the  simulator object and set up the main parameters
 sim = Simulation()
 sim.set_log_level('SUCCESS')
 sim.name = 'selfish_mine_test'
@@ -20,19 +22,21 @@ sim.tx_modeling = NoneTxModel()
 sim.dynamic = False
 sim.block_reward = 100
 
+# potential network topologies
 ring = lambda n1, n2: abs(n1.id - n2.id) == 1 or abs(n1.id - n2.id) == 9
 star = lambda n1, n2: n1.name == 'center' or n2.name == 'center'
 rand = lambda n1, n2: n2.id in [random.randint(0, 32) for _ in range(3)]
 mesh = lambda n1, n2: True
-
 sim.connection_predicate = mesh
 
+# mining strategies as singletons
 selfish_mining = SelfishMining()
 honest_mining = HonestMining()
 null_mining = NullMining()
 
 selfish_power, honest_power = 40, 60
 
+# create miners of two different types
 selfish_miner = Miner(f'SELFISH', selfish_power, Region('US'), sim.iter_seconds)
 selfish_miner.mine_strategy = selfish_mining
 selfish_miner.id = 0
@@ -43,11 +47,11 @@ honest_miner.mine_strategy = honest_mining
 honest_miner.id = 1
 sim.add_node(honest_miner)
 
-# POPULATE NETWORK WITH FULL NODES
+# populate network with full nodes
 # for i in range(30):
 #     full_node = Miner(f'FULL_{i}', 10, Region('US'), sim.iter_seconds)
 #     full_node.mine_strategy = null_mining
 #     full_node.id = i + 2
 #     sim.add_node(full_node)
 
-sim.run(report_time=True, track_perf=True)
+sim.run(report_time=True, track_perf=False)
