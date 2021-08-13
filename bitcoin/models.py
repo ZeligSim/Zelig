@@ -98,11 +98,12 @@ class Miner(Node):
             self.tx_model.generate(self)
 
         if self.consensus_oracle.can_mine(self):
-            self.mine_strategy.mine_block(self)
+            self.mine_strategy.generate_block(self)
 
-        space_use = sum([block.size for block in self.blockchain.values()])
-        space_use += self.tx_model.get_mempool_size(self)
-        self.bookkeeper.use_space(self, space_use)
+        # TODO: performance
+        # space_use = sum([block.size for block in self.blockchain.values() if block != 'placeholder'])
+        # space_use += self.tx_model.get_mempool_size(self)
+        # self.bookkeeper.use_space(self, space_use)
 
     def consume(self, item: Item):
         """
@@ -111,7 +112,7 @@ class Miner(Node):
         """
         if type(item) == BTCBlock:
             logger.info(f'[{self.timestamp}] {self.name} RECEIVED BLOCK {item.id}')
-            self.save_block(item, relay=True)
+            self.mine_strategy.receive_block(self, item, relay=True)
         elif type(item) == Transaction:
             self.tx_model.receive(self, item)
         elif type(item) == InvMessage:
@@ -129,20 +130,12 @@ class Miner(Node):
         elif type(item) == GetDataMessage:
             logger.debug(f'[{self.timestamp}] {self.name} RECEIVED GETDATA MESSAGE FOR {item.type} {item.item_id}')
             if item.type == 'block':
-                self.send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
+                try:
+                    self.send_to(self.outs[item.sender_id], self.blockchain[item.item_id])
+                except KeyError:
+                    pass
             elif item.type == 'tx':
                 self.send_to(self.outs[item.sender_id], self.tx_ids[item.item_id])
-
-    def save_block(self, block: BTCBlock, relay=False):
-        """
-        Removes the given block from `heads` if it exists and adds it to the `blockchain`.
-        * block (`BTCBlock`): BTCBlock to add to the blockchain.
-        """
-        super().save_block(block)
-        self.bookkeeper.save_block(self, block, self.timestamp)
-        self.tx_model.update_mempool(self, block)
-        if relay:
-            self.publish_item(block, 'block')
 
     def publish_item(self, item: Item, item_type: str):
         """
@@ -155,7 +148,11 @@ class Miner(Node):
             self.send_to(node, msg)
 
     def print_blockchain(self, head: Block = None):
-        head = self.mine_strategy.choose_head()
+        head = self.mine_strategy.choose_head(self)
         super().print_blockchain(head)
+
+    def set_mining_strategy(self, mine_strategy):
+        self.mine_strategy = mine_strategy
+        self.mine_strategy.setup(self)
 
 
