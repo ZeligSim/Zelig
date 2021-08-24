@@ -19,7 +19,7 @@ from bitcoin.bookkeeper import *
 class Transaction(Item):
     def __init__(self, sender_id: str, created_at: int, size: float, value: float, fee: float):
         super().__init__(sender_id, 0)
-        self.fee = 0
+        self.fee: Reward = None
         self.size = 400  # bytes
         self.value = 100
         self.created_at = created_at

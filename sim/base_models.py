@@ -27,7 +27,7 @@ class Item:
 
 
 class Block(Item):
-    """Represents a Bitcoin block."""
+    """Represents a block to be stored on the blockchain."""
 
     def __init__(self, creator, prev_id: str, height: int):
         """
